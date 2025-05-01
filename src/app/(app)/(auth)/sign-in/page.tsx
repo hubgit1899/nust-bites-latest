@@ -12,7 +12,7 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { errorMessages } from "@/app/constants/errorMessages";
 
-const page = () => {
+const SignInPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const router = useRouter();
@@ -146,4 +146,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default SignInPage;
