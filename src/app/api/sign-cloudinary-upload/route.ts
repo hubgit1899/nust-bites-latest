@@ -3,18 +3,22 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import cloudinary from "@/lib/cloudinary";
 
+interface UploadRequestBody {
+  uploadPreset?: string;
+}
+
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
 
-  if (!session || !session.user || !session.user.isVerified) {
+  if (!session?.user?.isVerified) {
     return NextResponse.json(
       { success: false, message: "Unauthorized" },
       { status: 401 }
     );
   }
 
-  // ✅ Read the preset from frontend body
-  const { uploadPreset } = await req.json();
+  const body = (await req.json()) as UploadRequestBody;
+  const { uploadPreset } = body;
 
   if (!uploadPreset) {
     return NextResponse.json(
@@ -23,7 +27,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // Only allow specific safe presets (extra protection)
   const allowedPresets = ["restaurants-logos", "another-preset"];
   if (!allowedPresets.includes(uploadPreset)) {
     return NextResponse.json(
@@ -32,13 +35,9 @@ export async function POST(req: Request) {
     );
   }
 
-  const timestamp = Math.round(new Date().getTime() / 1000);
-
+  const timestamp = Math.floor(Date.now() / 1000);
   const signature = cloudinary.utils.api_sign_request(
-    {
-      timestamp,
-      upload_preset: uploadPreset, // dynamic from frontend
-    },
+    { timestamp, upload_preset: uploadPreset },
     process.env.CLOUDINARY_API_SECRET!
   );
 

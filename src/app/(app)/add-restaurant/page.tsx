@@ -96,7 +96,7 @@ const AddRestaurantPage = () => {
         });
         console.log("✅ Signature Response:", signatureRes.data);
       } catch (error) {
-        const axiosError = error as AxiosError<any>;
+        const axiosError = error as AxiosError<{ message?: string }>;
         console.error("❌ Error getting Cloudinary signature:", axiosError);
 
         toast.error("Unauthorized to upload", {
@@ -138,8 +138,9 @@ const AddRestaurantPage = () => {
       } catch (uploadError) {
         console.error("❌ Cloudinary Upload Error:", uploadError);
 
-        const axiosError = uploadError as AxiosError<any>; // <-- important: not ApiResponse
-
+        const axiosError = uploadError as AxiosError<{
+          error?: { message?: string };
+        }>;
         let errorMessage = "Failed to upload logo image.";
         if (axiosError.response?.data?.error?.message) {
           errorMessage = axiosError.response.data.error.message;
@@ -165,7 +166,7 @@ const AddRestaurantPage = () => {
 
       router.push("/dashboard");
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<{ message?: string }>;
       console.error("❌ Error adding restaurant:", axiosError);
 
       toast.error("Failed to add restaurant", {
