@@ -1,0 +1,9 @@
+/.vscode
+/node_modules
+
+*.env
+.env
+.env.*
+*.log
+.gitignore
+*.DS_Store

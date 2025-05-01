@@ -1,0 +1,11 @@
+/* Custom styles for leaflet-geosearch */
+
+/* Make sure geosearch styles are loaded */
+@import url("https://unpkg.com/leaflet-geosearch@3.0.0/dist/geosearch.css");
+
+/* Position the search control in the top right */
+.leaflet-control-geosearch {
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+}
