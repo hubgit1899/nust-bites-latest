@@ -66,10 +66,7 @@ const SignInPage = () => {
     setIsSubmitting(false);
   };
   return (
-    <div
-      className="flex justify-center items-center"
-      style={{ height: "calc(100vh - var(--navbar-height) - 100px)" }}
-    >
+    <div className="flex justify-center items-center mb-15 mt-5">
       <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-full max-w-md border p-6">
         <legend className="fieldset-legend text-3xl font-bold">
           Sign<span className="text-primary">In</span>
