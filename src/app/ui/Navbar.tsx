@@ -21,7 +21,7 @@ const Navbar = () => {
   const user = session?.user as User;
   console.log("User: ", user);
   const router = useRouter();
-  const [navbarHeight, setNavbarHeight] = useState(0);
+  const [, setNavbarHeight] = useState(0);
 
   const page = {
     isSignIn: pathname === "/sign-in",

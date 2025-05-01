@@ -1,5 +1,4 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
-import { getNextSequence } from "@/helpers/getNextSequence"; // Adjust the path if needed
 
 export interface MenuOption {
   optionHeader: string;

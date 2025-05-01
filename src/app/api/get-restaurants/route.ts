@@ -20,7 +20,6 @@ const getCachedVerifiedRestaurants = unstable_cache(
 export async function GET() {
   try {
     const restaurants = await getCachedVerifiedRestaurants();
-    console.log("Restaurants: ", restaurants);
     return NextResponse.json({ success: true, restaurants });
   } catch (error) {
     console.error("Error fetching verified restaurants:", error);

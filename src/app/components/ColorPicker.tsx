@@ -2,11 +2,20 @@
 
 import { HexColorPicker } from "react-colorful";
 import { useState, useEffect, useRef } from "react";
-import { toast } from "sonner"; // optional for toasts
+import { toast } from "sonner";
+import { UseFormReturn } from "react-hook-form";
+import { z } from "zod";
+import { addRestaurantSchema } from "@/schemas/addRestaurantSchema";
 
-export default function ColorPicker({ form }: { form: any }) {
+type FormType = z.infer<typeof addRestaurantSchema>;
+
+export default function ColorPicker({
+  form,
+}: {
+  form: UseFormReturn<FormType>;
+}) {
   const [showPicker, setShowPicker] = useState(false);
-  const pickerRef = useRef<HTMLDivElement>(null); // Ref to detect outside click
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   const openEyeDropper = async () => {
     if (!("EyeDropper" in window)) {
@@ -17,13 +26,12 @@ export default function ColorPicker({ form }: { form: any }) {
       const eyeDropper = new (window as any).EyeDropper();
       const result = await eyeDropper.open();
       form.setValue("accentColor", result.sRGBHex);
-      setShowPicker(false); // Close picker after choosing
+      setShowPicker(false);
     } catch (error) {
       console.log("Eyedropper cancelled.", error);
     }
   };
 
-  // 🧹 Close picker when clicked outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -33,11 +41,9 @@ export default function ColorPicker({ form }: { form: any }) {
         setShowPicker(false);
       }
     };
-
     if (showPicker) {
       document.addEventListener("mousedown", handleClickOutside);
     }
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };

@@ -5,9 +5,6 @@ import UserModel from "@/models/User";
 import { User } from "next-auth";
 
 export async function POST(request: Request) {
-  // Connect to the database
-  await dbConnect();
-
   const session = await getServerSession(authOptions);
   const user: User = session?.user as User;
 
@@ -17,6 +14,9 @@ export async function POST(request: Request) {
       { status: 401 }
     );
   }
+
+  // Connect to the database
+  await dbConnect();
 
   const userId = user._id;
   const { riderAvailable } = await request.json();
@@ -58,10 +58,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
-  // Connect to the database
-  await dbConnect();
-
+export async function GET() {
   // Get the user session
   const session = await getServerSession(authOptions);
   const user = session?.user;
@@ -73,6 +70,9 @@ export async function GET(request: Request) {
       { status: 401 }
     );
   }
+
+  // Connect to the database
+  await dbConnect();
 
   try {
     // Retrieve the user from the database using the ID
