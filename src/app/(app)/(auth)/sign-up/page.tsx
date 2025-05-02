@@ -11,7 +11,6 @@ import { useRouter } from "next/navigation";
 import { signupSchema } from "@/schemas/signupSchema";
 import axios, { AxiosError } from "axios";
 import { ApiResponse } from "@/types/ApiResponse";
-import { Loader2 } from "lucide-react";
 
 const SignUpPage = () => {
   const [username, setUsername] = useState("");
@@ -105,7 +104,7 @@ const SignUpPage = () => {
               }}
             />
             {isCheckingUsername && (
-              <Loader2 className="animate-spin w-4 h-4 mt-2" />
+              <span className="loading loading-dots loading-xs mt-2"></span>
             )}
             {usernameMessage && (
               <p
@@ -195,7 +194,7 @@ const SignUpPage = () => {
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <span className="loading loading-spinner loading-sm"></span>
                 Please wait...
               </>
             ) : (

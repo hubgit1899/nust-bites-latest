@@ -8,7 +8,6 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { toast } from "sonner";
 import { ApiResponse } from "@/types/ApiResponse";
-import { Loader2 } from "lucide-react";
 
 const VerifyPage = () => {
   const router = useRouter();
@@ -84,7 +83,7 @@ const VerifyPage = () => {
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <span className="loading loading-spinner loading-sm"></span>
                 Please wait...
               </>
             ) : (

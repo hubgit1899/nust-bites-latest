@@ -6,7 +6,6 @@ import { toast } from "sonner";
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { signInSchema } from "@/schemas/signinSchema";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
@@ -123,7 +122,7 @@ const SignInPage = () => {
         >
           {isSubmitting ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <span className="loading loading-spinner loading-sm"></span>
               Please wait...
             </>
           ) : (

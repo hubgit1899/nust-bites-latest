@@ -4,7 +4,7 @@ export const DEFAULT_DARK = "night";
 
 export async function getThemes() {
   try {
-    const res = await fetch("/api/admin-settings");
+    const res = await fetch("/api/get-admin-settings");
     const data = await res.json();
 
     return {

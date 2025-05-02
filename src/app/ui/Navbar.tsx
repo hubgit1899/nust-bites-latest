@@ -23,6 +23,16 @@ const Navbar = () => {
   const router = useRouter();
   const [, setNavbarHeight] = useState(0);
 
+  const roles = {
+    isCustomer: user?.isCustomer,
+    isRestaurantOwner: user?.isRestaurantOwner,
+    isRestaurantAdmin: user?.isRestaurantAdmin,
+    isRider: user?.isRider,
+    isRiderVerified: user?.isRiderVerified,
+    isRiderAdmin: user?.isRiderAdmin,
+    isSuperAdmin: user?.isSuperAdmin,
+  };
+  console.log("Roles: ", roles);
   const page = {
     isSignIn: pathname === "/sign-in",
     isSignUp: pathname === "/sign-up",
@@ -51,6 +61,7 @@ const Navbar = () => {
       });
     }
   }, [error]);
+
   useEffect(() => {
     if (navbarRef.current) {
       const height = navbarRef.current.offsetHeight;
@@ -115,62 +126,68 @@ const Navbar = () => {
                   <ThemeToggle />
                 </div>
                 <h2 className="text-xl font-semibold mb-2">Restaurants</h2>
-                <ul>
-                  {restaurants?.map((restaurant) => (
-                    <Link
-                      key={String(restaurant._id)}
-                      href={`/restaurant/${restaurant._id}`}
-                      className="block"
-                    >
-                      <div
-                        className="tooltip tooltip-right"
-                        data-tip={restaurant.name}
+                {!restaurants ? (
+                  <div className="flex justify-center items-center py-10">
+                    <span className="loading loading-spinner loading-xl"></span>
+                  </div>
+                ) : (
+                  <ul>
+                    {restaurants.map((restaurant) => (
+                      <Link
+                        key={String(restaurant._id)}
+                        href={`/restaurant/${restaurant._id}`}
+                        className="block"
                       >
-                        <li
-                          className="relative rounded-lg cursor-pointer overflow-hidden"
-                          style={{
-                            backgroundColor: restaurant.accentColor,
-                            border: "none",
-                            aspectRatio: "2.88 / 1",
-                            height: "80px",
-                            backgroundImage: "none",
-                            marginBottom: "4%",
-                          }}
+                        <div
+                          className="tooltip tooltip-right"
+                          data-tip={restaurant.name}
                         >
-                          {/* Status dot */}
-                          <div className="absolute top-0 right-0 z-10">
-                            <div className="inline-grid *:[grid-area:1/1]">
-                              <div
-                                className={`status status-sm animate-ping ${
-                                  restaurant.online
-                                    ? "status-success"
-                                    : "status-error"
-                                }`}
-                              ></div>
-                              <div
-                                className={`status status-sm ${
-                                  restaurant.online
-                                    ? "status-success"
-                                    : "status-error"
-                                }`}
-                              ></div>
-                            </div>
-                          </div>
-
-                          {/* Logo Image */}
-                          <img
-                            src={restaurant.logoImageURL}
-                            alt={restaurant.name}
-                            className="h-full w-full object-contain transition-transform duration-300 hover:scale-110"
+                          <li
+                            className="relative rounded-lg cursor-pointer overflow-hidden"
                             style={{
-                              backgroundColor: "transparent",
+                              backgroundColor: restaurant.accentColor,
+                              border: "none",
+                              aspectRatio: "2.88 / 1",
+                              height: "80px",
+                              backgroundImage: "none",
+                              marginBottom: "4%",
                             }}
-                          />
-                        </li>
-                      </div>
-                    </Link>
-                  ))}
-                </ul>
+                          >
+                            {/* Status dot */}
+                            <div className="absolute top-0 right-0 z-10">
+                              <div className="inline-grid *:[grid-area:1/1]">
+                                <div
+                                  className={`status status-sm animate-ping ${
+                                    restaurant.online
+                                      ? "status-success"
+                                      : "status-error"
+                                  }`}
+                                ></div>
+                                <div
+                                  className={`status status-sm ${
+                                    restaurant.online
+                                      ? "status-success"
+                                      : "status-error"
+                                  }`}
+                                ></div>
+                              </div>
+                            </div>
+
+                            {/* Logo Image */}
+                            <img
+                              src={restaurant.logoImageURL}
+                              alt={restaurant.name}
+                              className="h-full w-full object-contain transition-transform duration-300 hover:scale-110"
+                              style={{
+                                backgroundColor: "transparent",
+                              }}
+                            />
+                          </li>
+                        </div>
+                      </Link>
+                    ))}
+                  </ul>
+                )}
               </ul>
             </div>
           </div>
@@ -178,7 +195,7 @@ const Navbar = () => {
         <div className="navbar-center">
           <MainLogo />
         </div>
-        <div className="navbar-end gap-1.5">
+        <div className="navbar-end gap-2">
           {user ? (
             <>
               <div className="dropdown dropdown-end">
@@ -202,8 +219,33 @@ const Navbar = () => {
                     <li>
                       <a>Settings</a>
                     </li>
+                    {roles.isRestaurantOwner && (
+                      <li>
+                        <button
+                          onClick={() =>
+                            router.push("/restaurant/my-restaurants")
+                          }
+                        >
+                          My Restaurants
+                        </button>
+                      </li>
+                    )}
                     <li>
-                      <button onClick={() => signOut()}>Logout</button>
+                      <button
+                        onClick={() =>
+                          router.push("/restaurant/add-restaurant")
+                        }
+                      >
+                        Add Restaurant
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        className="btn btn-xs mt-1 btn-outline btn-error"
+                        onClick={() => signOut()}
+                      >
+                        Logout
+                      </button>
                     </li>
                   </ul>
                 </>

@@ -14,6 +14,7 @@ import { SearchControl, OpenStreetMapProvider } from "leaflet-geosearch";
 // CSS file to position the search bar (create this file)
 import "leaflet-geosearch/dist/geosearch.css"; // Import the default CSS first
 import "./map-styles.css"; // Then our overrides
+import { toast } from "sonner";
 
 // Fix default marker icons
 delete (L.Icon.Default as any).prototype._getIconUrl;
@@ -105,13 +106,18 @@ export default function MapPopup({
       },
       (error) => {
         console.error("Failed to fetch current location:", error);
+        toast.error("Location Error", {
+          description: error.message,
+        });
       }
     );
   }, [mapInstance]); // depends on map being ready
 
   const goToCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser.");
+      toast.error("Location Error", {
+        description: "Geolocation is not supported by your browser.",
+      });
       return;
     }
 
@@ -119,6 +125,18 @@ export default function MapPopup({
       (position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
+
+        const [currLat, currLng] = markerPosition || [null, null];
+        const isSameLocation =
+          currLat !== null &&
+          currLng !== null &&
+          Math.abs(currLat - lat) < 0.0001 &&
+          Math.abs(currLng - lng) < 0.0001;
+
+        if (isSameLocation) {
+          return;
+        }
+
         setMarkerPosition([lat, lng]);
         fetchCity(lat, lng, setLocation);
 
@@ -131,7 +149,10 @@ export default function MapPopup({
       },
       (error) => {
         console.error("Failed to get current location:", error);
-        alert("Failed to get your location. Please allow location access.");
+        toast.error("Location Error", {
+          description:
+            "Failed to get your location. Please allow location access.",
+        });
       }
     );
   };

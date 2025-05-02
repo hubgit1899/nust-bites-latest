@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useEffect, useState } from "react";
-import { getThemes, DEFAULT_LIGHT, DEFAULT_DARK } from "@/app/theme";
+import { getThemes, DEFAULT_LIGHT, DEFAULT_DARK } from "@/lib/theme";
 
 export const ThemeContext = createContext({
   theme: DEFAULT_LIGHT,

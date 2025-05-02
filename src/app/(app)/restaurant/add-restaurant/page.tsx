@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { addRestaurantSchema } from "@/schemas/addRestaurantSchema";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import axios, { AxiosError } from "axios";
 import { z } from "zod";
@@ -414,7 +413,7 @@ const AddRestaurantPage = () => {
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <span className="loading loading-spinner loading-sm"></span>
                 Please wait...
               </>
             ) : (
