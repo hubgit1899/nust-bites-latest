@@ -279,7 +279,7 @@ export default function MyRestaurantsPage() {
                     data-tip="Manage Menu"
                   >
                     <Link
-                      href={`/restaurants/${r._id}/menu`}
+                      href={`/restaurant/my-restaurants/${r._id}/manage-menu`}
                       className="btn btn-circle btn-secondary"
                     >
                       <svg
