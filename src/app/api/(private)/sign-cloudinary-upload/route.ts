@@ -27,7 +27,10 @@ export async function POST(req: Request) {
     );
   }
 
-  const allowedPresets = ["restaurants-logos", "another-preset"];
+  const allowedPresets =
+    process.env.ALLOWED_UPLOAD_PRESETS?.split(",").map((preset) =>
+      preset.trim()
+    ) ?? [];
   if (!allowedPresets.includes(uploadPreset)) {
     return NextResponse.json(
       { success: false, message: "Invalid upload preset" },

@@ -33,11 +33,11 @@ export default function MyRestaurantsPage() {
   }, []);
 
   return (
-    <div className="mb-15 mt-5">
+    <div className={loading ? "" : "mb-15 mt-5"}>
       <h2 className="text-2xl font-bold mb-6">My Restaurants</h2>
 
       {loading ? (
-        <div className="flex justify-center py-10">
+        <div className="flex justify-center items-center min-h-screen">
           <span className="loading loading-bars loading-lg"></span>
         </div>
       ) : (
