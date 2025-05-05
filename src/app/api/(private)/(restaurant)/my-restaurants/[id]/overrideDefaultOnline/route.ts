@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import dbConnect from "@/lib/dbConnect";
@@ -6,10 +6,11 @@ import RestaurantModel from "@/models/Restaurant";
 import { hasRestaurantAccess } from "@/lib/auth";
 
 export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  context: { params: { id: string } }
 ) {
-  // Already destructured
+  const { params } = context;
+
   await dbConnect();
   const session = await getServerSession(authOptions);
 
