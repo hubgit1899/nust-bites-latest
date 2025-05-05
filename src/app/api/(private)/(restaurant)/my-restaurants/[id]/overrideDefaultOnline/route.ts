@@ -5,8 +5,11 @@ import dbConnect from "@/lib/dbConnect";
 import RestaurantModel from "@/models/Restaurant";
 import { hasRestaurantAccess } from "@/lib/auth";
 
-export async function PATCH(req: Request, context: { params: { id: string } }) {
-  const { params } = context; // <-- Destructure inside
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  // Already destructured
   await dbConnect();
   const session = await getServerSession(authOptions);
 
