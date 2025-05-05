@@ -7,10 +7,8 @@ import { hasRestaurantAccess } from "@/lib/auth";
 
 export async function PATCH(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
-  const { params } = context;
-
   await dbConnect();
   const session = await getServerSession(authOptions);
 
