@@ -101,32 +101,6 @@ RestaurantSchema.virtual("online").get(function (this: any) {
   }
 });
 
-// Add a debug method to help troubleshoot
-RestaurantSchema.methods.getOnlineDebugInfo = function () {
-  const minutesNow = getCurrentMinutesInPakistan();
-  const { start, end } = this.onlineTime;
-  const isOvernight = start > end;
-
-  let isOnline;
-  if (isOvernight) {
-    isOnline = minutesNow >= start || minutesNow < end;
-  } else {
-    isOnline = minutesNow >= start && minutesNow < end;
-  }
-
-  return {
-    restaurantName: this.name,
-    currentTime: new Date().toISOString(),
-    minutesFromMidnight: minutesNow,
-    onlineTimeStart: start,
-    onlineTimeEnd: end,
-    isOvernight,
-    calculatedOnlineStatus: isOnline,
-    virtualOnlineStatus: this.online,
-    forceOverrideValue: this.forceOnlineOverride,
-  };
-};
-
 const RestaurantModel =
   (mongoose.models.Restaurant as mongoose.Model<Restaurant>) ||
   mongoose.model<Restaurant>("Restaurant", RestaurantSchema);
