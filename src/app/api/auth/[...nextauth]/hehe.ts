@@ -1,3 +1,4 @@
+// app/api/auth/[...nextauth]/options.ts
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
@@ -11,12 +12,22 @@ export const authOptions: NextAuthOptions = {
       id: "credentials",
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "text" },
+        identifier: { label: "Email or Username", type: "text" },
         password: { label: "Password", type: "password" },
+        forceRefresh: { label: "Force Refresh", type: "text" }, // Used for session revalidation
       },
       async authorize(credentials: any): Promise<any> {
         await dbConnect();
         try {
+          // If forceRefresh is true and we have a valid session, just re-authorize
+          if (
+            credentials.forceRefresh === "true" &&
+            credentials.sessionUserId
+          ) {
+            const user = await UserModel.findById(credentials.sessionUserId);
+            if (user) return user;
+          }
+
           const user = await UserModel.findOne({
             $or: [
               { email: credentials.identifier },
@@ -49,8 +60,9 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async jwt({ token, user }) {
-      const THIRTY_MINUTES = 60 * 1000; // Change this is production
+    async jwt({ token, user, trigger }) {
+      // Default refresh interval (reduce in production)
+      const REFRESH_INTERVAL = 30 * 60 * 1000; // 30 minutes
 
       // On first sign-in
       if (user) {
@@ -70,11 +82,16 @@ export const authOptions: NextAuthOptions = {
         token.lastRoleRefresh = Date.now();
       }
 
-      // Periodically refresh roles every 30 minutes
+      // Support for explicit refresh via the "update" trigger
+      if (trigger === "update") {
+        token.lastRoleRefresh = 0; // Force refresh on next check
+      }
+
+      // Periodically refresh roles
       if (
         token._id &&
         (!token.lastRoleRefresh ||
-          Date.now() - token.lastRoleRefresh > THIRTY_MINUTES)
+          Date.now() - token.lastRoleRefresh > REFRESH_INTERVAL)
       ) {
         await dbConnect();
         const latestUser = await UserModel.findById(token._id).lean();
@@ -118,7 +135,10 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 2592000,
+    maxAge: 2592000, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET,
+
+  // Enable debug in development environments only
+  debug: process.env.NODE_ENV === "development",
 };

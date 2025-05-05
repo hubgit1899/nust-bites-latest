@@ -19,7 +19,6 @@ const Navbar = () => {
   const pathname = usePathname();
   const { data: session } = useSession();
   const user = session?.user as User;
-  console.log("User: ", user);
   const router = useRouter();
   const [, setNavbarHeight] = useState(0);
 
@@ -32,7 +31,6 @@ const Navbar = () => {
     isRiderAdmin: user?.isRiderAdmin,
     isSuperAdmin: user?.isSuperAdmin,
   };
-  console.log("Roles: ", roles);
   const page = {
     isSignIn: pathname === "/sign-in",
     isSignUp: pathname === "/sign-up",

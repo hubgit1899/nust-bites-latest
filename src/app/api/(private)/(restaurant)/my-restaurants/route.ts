@@ -18,7 +18,7 @@ export async function GET() {
   try {
     const restaurants = await RestaurantModel.find({
       owner: session.user._id,
-    }); // no .lean()
+    });
 
     return NextResponse.json({ success: true, restaurants });
   } catch (error) {

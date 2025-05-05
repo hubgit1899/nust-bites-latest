@@ -8,6 +8,7 @@ import { sendRestaurantSubmissionEmail } from "@/helpers/sendNewRestaurantAddedE
 import UserModel from "@/models/User";
 import extractPublicId from "@/helpers/extractPublicId";
 import { deleteCloudinaryImage } from "@/lib/cloudinary";
+import { updateUserRoleAndRevalidate } from "@/lib/sessionUtils";
 
 export async function POST(req: Request) {
   await dbConnect();
@@ -90,21 +91,47 @@ export async function POST(req: Request) {
     owner: _id,
   });
 
+  const wasRestaurantOwner = user.isRestaurantOwner;
+
   try {
     await restaurant.save();
 
-    // Update user to add ownership
-    user!.isRestaurantOwner = true;
-    if (user && restaurant._id) {
+    user.isRestaurantOwner = true;
+
+    if (restaurant._id) {
       user.ownedRestaurantIds.push(
         restaurant._id as (typeof user.ownedRestaurantIds)[0]
       );
     }
-    await user!.save();
+
+    await user.save();
+
+    if (!wasRestaurantOwner && _id) {
+      await updateUserRoleAndRevalidate(_id);
+    } else {
+      console.log("revalidation fauled");
+    }
   } catch (err) {
     console.error("❌ Failed to update user, rolling back restaurant:", err);
-    await RestaurantModel.findByIdAndDelete(restaurant._id); // Rollback
-    if (publicId) await deleteCloudinaryImage(publicId); // Cleanup
+
+    // Rollback restaurant
+    await RestaurantModel.findByIdAndDelete(restaurant._id);
+
+    // Rollback user changes
+    user.isRestaurantOwner = wasRestaurantOwner;
+    user.ownedRestaurantIds = user.ownedRestaurantIds.filter(
+      (id) => id.toString() !== restaurant._id?.toString()
+    );
+
+    try {
+      await user.save();
+    } catch (userRollbackErr) {
+      console.error("❌ Failed to rollback user changes:", userRollbackErr);
+    }
+
+    // Cleanup uploaded image if needed
+    if (publicId) await deleteCloudinaryImage(publicId);
+
     return NextResponse.json(
       {
         success: false,
@@ -147,6 +174,7 @@ export async function POST(req: Request) {
       success: true,
       message: `${restaurant.name} added successfully.`,
       restaurant,
+      sessionRevalidated: !user.isRestaurantOwner,
     },
     { status: 201 }
   );

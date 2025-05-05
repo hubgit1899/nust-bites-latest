@@ -11,7 +11,7 @@ export interface Restaurant extends Document {
     start: number;
     end: number;
   };
-  forceOnlineOverride: boolean | null;
+  forceOnlineOverride: number;
   orders: Types.ObjectId[];
   owner: Types.ObjectId;
   menu: Types.ObjectId[];
@@ -37,7 +37,7 @@ const RestaurantSchema: Schema<Restaurant> = new Schema(
       start: { type: Number, required: true }, // minutes from midnight
       end: { type: Number, required: true },
     },
-    forceOnlineOverride: { type: Boolean, default: null },
+    forceOnlineOverride: { type: Number, default: 0 }, // 0: null, 1: true, -1: false
     owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
     menu: [{ type: Schema.Types.ObjectId, ref: "MenuItem" }],
     orders: [{ type: Schema.Types.ObjectId, ref: "Order" }],
@@ -54,8 +54,12 @@ const RestaurantSchema: Schema<Restaurant> = new Schema(
 
 // Virtual for dynamic "online" value
 RestaurantSchema.virtual("online").get(function (this: any) {
-  if (this.forceOnlineOverride !== null) return this.forceOnlineOverride;
-
+  if (this.forceOnlineOverride !== 0)
+    return {
+      true: this.forceOnlineOverride === 1,
+      false: this.forceOnlineOverride === -1,
+    };
+  if (this.isVerified === false) return false;
   if (!this.onlineTime) return false;
 
   const now = new Date();
