@@ -21,7 +21,6 @@ export default function MyRestaurantsPage() {
         const data = await res.json();
         if (data.success) {
           setRestaurants(data.restaurants);
-          console.log("Restaurants:", data.restaurants);
         } else {
           toast.error("Failed to load your restaurants.");
         }

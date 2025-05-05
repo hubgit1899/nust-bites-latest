@@ -10,9 +10,11 @@ import axios, { AxiosError } from "axios";
 import { z } from "zod";
 import ColorPicker from "@/app/components/ColorPicker";
 import MapPopup from "@/app/components/MapPopup/MapPopup";
+import { useSession } from "next-auth/react";
 
 const AddRestaurantPage = () => {
   const router = useRouter();
+  const { update } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -64,8 +66,6 @@ const AddRestaurantPage = () => {
     setIsSubmitting(true);
 
     try {
-      console.log("Form Data BEFORE conversion:", data);
-
       const [startHours, startMinutes] = data.onlineTime
         .startTimeString!.split(":")
         .map(Number);
@@ -78,8 +78,6 @@ const AddRestaurantPage = () => {
 
       delete data.onlineTime.startTimeString;
       delete data.onlineTime.endTimeString;
-
-      console.log("Form Data AFTER conversion:", data);
 
       if (!selectedFile) {
         toast.error("Please select a logo image");
@@ -158,6 +156,7 @@ const AddRestaurantPage = () => {
 
       // 3. Save restaurant to your own database
       const response = await axios.post("/api/add-restaurant", data);
+      await update(); // 🔁 This refreshes the session
 
       toast.success("Restaurant added successfully!", {
         description: response.data.message,

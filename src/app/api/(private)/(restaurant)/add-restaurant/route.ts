@@ -8,7 +8,6 @@ import { sendRestaurantSubmissionEmail } from "@/helpers/sendNewRestaurantAddedE
 import UserModel from "@/models/User";
 import extractPublicId from "@/helpers/extractPublicId";
 import { deleteCloudinaryImage } from "@/lib/cloudinary";
-import { updateUserRoleAndRevalidate } from "@/lib/sessionUtils";
 
 export async function POST(req: Request) {
   await dbConnect();
@@ -105,12 +104,6 @@ export async function POST(req: Request) {
     }
 
     await user.save();
-
-    if (!wasRestaurantOwner && _id) {
-      await updateUserRoleAndRevalidate(_id);
-    } else {
-      console.log("revalidation fauled");
-    }
   } catch (err) {
     console.error("❌ Failed to update user, rolling back restaurant:", err);
 
