@@ -52,26 +52,80 @@ const RestaurantSchema: Schema<Restaurant> = new Schema(
   }
 );
 
+// Helper function to get current minutes from midnight in Pakistan timezone
+function getCurrentMinutesInPakistan() {
+  try {
+    // Use the Intl API for better timezone handling
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Karachi", // Pakistan timezone
+      hour: "numeric",
+      minute: "numeric",
+      hour12: false,
+    });
+
+    const timeString = formatter.format(now);
+    const [hours, minutes] = timeString.split(":").map(Number);
+
+    return hours * 60 + minutes;
+  } catch (error) {
+    // Fallback to server time if timezone conversion fails
+    console.error("Timezone conversion error:", error);
+    const now = new Date();
+    return now.getHours() * 60 + now.getMinutes();
+  }
+}
+
 // Virtual for dynamic "online" value
 RestaurantSchema.virtual("online").get(function (this: any) {
-  if (this.forceOnlineOverride !== 0)
-    return {
-      true: this.forceOnlineOverride === 1,
-      false: this.forceOnlineOverride === -1,
-    };
+  // Force override takes precedence
+  if (this.forceOnlineOverride !== 0) {
+    return this.forceOnlineOverride === 1;
+  }
+
+  // Not verified restaurants are never online
   if (this.isVerified === false) return false;
   if (!this.onlineTime) return false;
 
-  const now = new Date();
-  const minutesNow = now.getHours() * 60 + now.getMinutes();
+  // Get current time specifically in Pakistan timezone
+  const minutesNow = getCurrentMinutesInPakistan();
   const { start, end } = this.onlineTime;
 
-  if (start <= end) {
-    return minutesNow >= start && minutesNow < end;
-  } else {
+  // Handle overnight time ranges (when start > end)
+  if (start > end) {
+    // For overnight periods (e.g., 11:00 AM to 2:00 AM)
     return minutesNow >= start || minutesNow < end;
+  } else {
+    // For same-day periods (e.g., 8:00 AM to 8:00 PM)
+    return minutesNow >= start && minutesNow < end;
   }
 });
+
+// Add a debug method to help troubleshoot
+RestaurantSchema.methods.getOnlineDebugInfo = function () {
+  const minutesNow = getCurrentMinutesInPakistan();
+  const { start, end } = this.onlineTime;
+  const isOvernight = start > end;
+
+  let isOnline;
+  if (isOvernight) {
+    isOnline = minutesNow >= start || minutesNow < end;
+  } else {
+    isOnline = minutesNow >= start && minutesNow < end;
+  }
+
+  return {
+    restaurantName: this.name,
+    currentTime: new Date().toISOString(),
+    minutesFromMidnight: minutesNow,
+    onlineTimeStart: start,
+    onlineTimeEnd: end,
+    isOvernight,
+    calculatedOnlineStatus: isOnline,
+    virtualOnlineStatus: this.online,
+    forceOverrideValue: this.forceOnlineOverride,
+  };
+};
 
 const RestaurantModel =
   (mongoose.models.Restaurant as mongoose.Model<Restaurant>) ||
