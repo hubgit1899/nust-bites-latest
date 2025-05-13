@@ -81,8 +81,6 @@ export const authOptions: NextAuthOptions = {
         token.lastRoleRefresh = Date.now();
       }
 
-      console.log("next auth options");
-      console.log("token", token);
       // Support for explicit refresh via the "update" trigger
       if (trigger === "update") {
         token.lastRoleRefresh = 0; // Force refresh on next check
@@ -95,8 +93,6 @@ export const authOptions: NextAuthOptions = {
         (!token.lastRoleRefresh ||
           Date.now() - token.lastRoleRefresh > REFRESH_INTERVAL)
       ) {
-        console.log("updating token");
-
         await dbConnect();
         const latestUser = await UserModel.findById(token._id).lean();
         if (!latestUser) {
@@ -112,7 +108,6 @@ export const authOptions: NextAuthOptions = {
           token.lastRoleRefresh = Date.now();
         }
       }
-      console.log("token after update", token);
       return token;
     },
 

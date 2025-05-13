@@ -17,10 +17,10 @@ export const addRestaurantSchema = z.object({
   orderCode: z
     .string()
     .min(1, { message: "Order code must be at least 1 character long." })
-    .max(3, { message: "Order code must be at most 3 characters long." })
-    .regex(/^[a-z][a-z0-9]*$/, {
+    .max(4, { message: "Order code must be at most 4 characters long." })
+    .regex(/^[A-Z][A-Z0-9]*$/, {
       message:
-        "Order code must start with a lowercase letter and contain only lowercase letters and numbers.",
+        "Order code must start with an uppercase letter and contain only uppercase letters and numbers.",
     }),
 
   location: z.object({

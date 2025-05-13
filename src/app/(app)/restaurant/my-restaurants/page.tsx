@@ -4,7 +4,19 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Restaurant } from "@/models/Restaurant";
-import { formatTime } from "@/helpers/formatTime";
+import { formatTime } from "@/helpers/localTime";
+import {
+  Binary,
+  CalendarArrowDown,
+  Clock,
+  MapPin,
+  Settings,
+  ShoppingBag,
+  Star,
+  Store,
+  TriangleAlert,
+  UtensilsCrossed,
+} from "lucide-react";
 
 export default function MyRestaurantsPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
@@ -49,6 +61,20 @@ export default function MyRestaurantsPage() {
     return restaurant.online ? "btn-success" : "btn-error";
   };
 
+  // Get status text based on forceOnlineOverride and online status
+  const getStatusText = (restaurant: Restaurant) => {
+    if (restaurant.forceOnlineOverride === 1) return "FORCED ONLINE";
+    if (restaurant.forceOnlineOverride === -1) return "FORCED OFFLINE";
+    return restaurant.online ? "ONLINE" : "OFFLINE";
+  };
+
+  // Get badge color based on forceOnlineOverride and online status
+  const getStatusBadgeColor = (restaurant: Restaurant) => {
+    if (restaurant.forceOnlineOverride === 1) return "badge-success";
+    if (restaurant.forceOnlineOverride === -1) return "badge-error";
+    return restaurant.online ? "badge-success" : "badge-error";
+  };
+
   // Handle update of forceOnlineOverride
   const handleOverrideUpdate = async () => {
     if (!selectedRestaurant) return;
@@ -76,9 +102,10 @@ export default function MyRestaurantsPage() {
           prevRestaurants.map((r) => {
             if (r._id === selectedRestaurant._id) {
               // Create a new object while preserving the Restaurant type
-              return Object.assign({}, r, {
+              return {
+                ...r,
                 forceOnlineOverride: overrideValue,
-              }) as Restaurant;
+              } as Restaurant;
             }
             return r;
           })
@@ -101,11 +128,14 @@ export default function MyRestaurantsPage() {
   };
 
   return (
-    <div className={loading ? "" : "mb-15 mt-5"}>
-      <h2 className="text-2xl font-bold mb-6">My Restaurants</h2>
+    <div className="flex flex-col flex-grow min-h-[calc(100vh-var(--navbar-height)-var(--footer-height,4rem))]">
+      <h1 className="text-2xl font-bold flex items-center gap-2 mb-6">
+        <Store size={24} />
+        My Restaurants
+      </h1>
 
       {loading ? (
-        <div className="flex justify-center items-center min-h-screen">
+        <div className="flex-grow flex justify-center items-center">
           <span className="loading loading-bars loading-lg"></span>
         </div>
       ) : (
@@ -133,23 +163,9 @@ export default function MyRestaurantsPage() {
                             {r.isVerified ? "VERIFIED" : "UNVERIFIED"}
                           </span>
                           <span
-                            className={`badge badge-soft badge-sm font-semibold ${
-                              r.forceOnlineOverride === 1
-                                ? "badge-success"
-                                : r.forceOnlineOverride === -1
-                                  ? "badge-error"
-                                  : r.online
-                                    ? "badge-success"
-                                    : "badge-error"
-                            }`}
+                            className={`badge badge-soft badge-sm font-semibold ${getStatusBadgeColor(r)}`}
                           >
-                            {r.forceOnlineOverride === 1
-                              ? "FORCED ONLINE"
-                              : r.forceOnlineOverride === -1
-                                ? "FORCED OFFLINE"
-                                : r.online
-                                  ? "ONLINE"
-                                  : "OFFLINE"}
+                            {getStatusText(r)}
                           </span>
                         </div>
                       </div>
@@ -182,23 +198,9 @@ export default function MyRestaurantsPage() {
                             {r.isVerified ? "VERIFIED" : "UNVERIFIED"}
                           </span>
                           <span
-                            className={`badge badge-soft badge-sm font-semibold ${
-                              r.forceOnlineOverride === 1
-                                ? "badge-success"
-                                : r.forceOnlineOverride === -1
-                                  ? "badge-error"
-                                  : r.online
-                                    ? "badge-success"
-                                    : "badge-error"
-                            }`}
+                            className={`badge badge-soft badge-sm font-semibold ${getStatusBadgeColor(r)}`}
                           >
-                            {r.forceOnlineOverride === 1
-                              ? "FORCED ONLINE"
-                              : r.forceOnlineOverride === -1
-                                ? "FORCED OFFLINE"
-                                : r.online
-                                  ? "ONLINE"
-                                  : "OFFLINE"}
+                            {getStatusText(r)}
                           </span>
                         </div>
                       </div>
@@ -207,66 +209,21 @@ export default function MyRestaurantsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="flex flex-col space-y-2">
                           <div className="flex items-center gap-2">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                              />
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                              />
-                            </svg>
+                            <MapPin size={16} />
                             <span className="text-sm">
                               <strong>City:</strong> {r.location.city}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                              />
-                            </svg>
+                            <Binary size={16} />
                             <span className="text-sm">
                               <strong>Order Code:</strong> {r.orderCode}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
+                            <Clock size={16} />
                             <span className="text-sm">
                               <strong>Hours:</strong>{" "}
                               {`${formatTime(r.onlineTime.start)} - ${formatTime(r.onlineTime.end)}`}
@@ -276,60 +233,22 @@ export default function MyRestaurantsPage() {
 
                         <div className="flex flex-col space-y-2">
                           <div className="flex items-center gap-2">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                              />
-                            </svg>
+                            <UtensilsCrossed size={16} />
+
                             <span className="text-sm">
                               <strong>Menu Items:</strong> {r.menu?.length || 0}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                              />
-                            </svg>
+                            <CalendarArrowDown size={16} />
                             <span className="text-sm">
                               <strong>Orders:</strong> {r.orders?.length || 0}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                              />
-                            </svg>
+                            <Star size={16} />
                             <span className="text-sm">
                               <strong>Rating:</strong> {r.rating || "N/A"}
                               {r.ratingCount > 0 && (
@@ -379,20 +298,7 @@ export default function MyRestaurantsPage() {
                             href={`/restaurant/my-restaurants/${r._id}/manage-menu`}
                             className="btn btn-circle btn-secondary"
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-6 w-6"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                              />
-                            </svg>
+                            <UtensilsCrossed />
                           </Link>
                         </div>
                       </div>
@@ -418,20 +324,7 @@ export default function MyRestaurantsPage() {
                             }}
                             className={`btn btn-circle ${getStatusButtonColor(r)}`}
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-6 w-6"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"
-                              />
-                            </svg>
+                            <Settings />
                           </button>
                         </div>
                       </div>
@@ -457,7 +350,7 @@ export default function MyRestaurantsPage() {
 
               <dialog
                 id="online_status_modal"
-                className="modal modal-bottom sm:modal-middle"
+                className="modal modal-bottom sm:modal-middle backdrop-blur-xs"
               >
                 <div className="modal-box">
                   <h3 className="font-bold text-lg">
@@ -465,28 +358,21 @@ export default function MyRestaurantsPage() {
                   </h3>
 
                   <div className="py-4 text-sm">
-                    <p className="mb-4 text-warning">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-6 w-6 inline-block mr-2"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2.5}
-                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                        />
-                      </svg>
-                      <span className="font-semibold">Warning:</span> Overriding
-                      the default behavior will prevent the restaurant from{" "}
-                      <span className="font-semibold">
-                        automatically switching online/offline
-                      </span>{" "}
-                      based on operating hours.
-                    </p>
+                    <div className="mb-4 text-warning flex items-start gap-1">
+                      <TriangleAlert
+                        size={20}
+                        className="text-warning shrink-0"
+                      />
+                      <p className="text-sm leading-snug">
+                        <span className="font-semibold">Warning:</span>{" "}
+                        Overriding the default behavior will prevent the
+                        restaurant from{" "}
+                        <span className="font-semibold">
+                          automatically switching online/offline
+                        </span>{" "}
+                        based on operating hours.
+                      </p>
+                    </div>
 
                     <div className="border rounded-lg p-4 bg-base-200">
                       <p className="mb-3 font-medium">

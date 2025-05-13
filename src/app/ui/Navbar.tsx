@@ -11,8 +11,8 @@ import { toast } from "sonner";
 import useSWR from "swr";
 import { Restaurant } from "@/models/Restaurant";
 import { useRouter } from "next/navigation";
-import Cart from "../components/Cart";
-import Avatar from "../components/Avatar";
+import Cart from "../components/navbar/Cart";
+import Avatar from "../components/navbar/Avatar";
 
 const Navbar = () => {
   const navbarRef = useRef<HTMLDivElement | null>(null);
@@ -46,8 +46,8 @@ const Navbar = () => {
   };
 
   const { data: restaurants, error } = useSWR("/api/get-restaurants", fetcher, {
-    revalidateOnFocus: false,
-    refreshInterval: 1000 * 60 * 10, // revalidate every 10 minutes
+    revalidateOnFocus: true, // TODO: HVAE TO DISCUSS
+    refreshInterval: 1000 * 60 * 10, // TODO: revalidate every 2 minutes
   });
   console.log("Restaurants: ", restaurants);
 
@@ -83,7 +83,7 @@ const Navbar = () => {
   }, [navbarRef.current]);
 
   return (
-    <div>
+    <div className="mb-5">
       <div
         ref={navbarRef}
         className="navbar fixed top-0 left-0 w-full z-50 mx-auto px-4 sm:px-6 bg-base-200/80 backdrop-blur-md shadow-sm "

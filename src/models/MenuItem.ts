@@ -1,4 +1,6 @@
+import { getCurrentMinutesInPakistan } from "@/helpers/localTime";
 import mongoose, { Schema, Document, Types } from "mongoose";
+import autopopulate from "mongoose-autopopulate";
 
 export interface MenuOption {
   optionHeader: string;
@@ -13,9 +15,15 @@ export interface MenuItem extends Document {
   basePrice: number;
   imageURL: string;
   category: string;
-  restaurant: Types.ObjectId; // <- Changed to ObjectId
-  isAvailable: boolean;
   options?: MenuOption[];
+  restaurant: Types.ObjectId | any;
+  available: boolean;
+  forceOnlineOverride: boolean;
+  onlineTime?: {
+    start: number;
+    end: number;
+  };
+  online?: boolean; // virtual
 }
 
 const MenuOptionSchema: Schema<MenuOption> = new Schema({
@@ -36,27 +44,61 @@ const MenuItemSchema: Schema<MenuItem> = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Restaurant",
       required: true,
+      autopopulate: {
+        select: "online forceOnlineOverride isVerified onlineTime",
+      },
     },
-    isAvailable: { type: Boolean, default: true },
+    available: { type: Boolean, default: true },
+    forceOnlineOverride: { type: Boolean, default: false },
+    onlineTime: {
+      start: { type: Number },
+      end: { type: Number },
+    },
     options: { type: [MenuOptionSchema], default: [] },
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 
-// // Auto-increment menuItemId
-// MenuItemSchema.pre("save", async function (next) {
-//   if (!this.isNew || this.menuItemId) return next();
-//   try {
-//     this.menuItemId = await getNextSequence("menuItemId");
-//     next();
-//   } catch (err) {
-//     next(err as Error);
-//   }
-// });
+// Apply plugin
+MenuItemSchema.plugin(autopopulate);
+
+// Virtual field for online
+MenuItemSchema.virtual("online").get(function (this: any) {
+  if (!this.available) return false;
+
+  const restaurant = this.restaurant;
+  if (!restaurant || typeof restaurant !== "object" || !restaurant._id) {
+    return false;
+  }
+
+  if (!restaurant.online) return false;
+
+  if (!this.forceOnlineOverride) {
+    return true;
+  }
+
+  if (
+    !this.onlineTime ||
+    this.onlineTime.start === undefined ||
+    this.onlineTime.end === undefined
+  ) {
+    return true;
+  }
+
+  const minutesNow = getCurrentMinutesInPakistan();
+  const { start, end } = this.onlineTime;
+
+  return start > end
+    ? minutesNow >= start || minutesNow < end
+    : minutesNow >= start && minutesNow < end;
+});
 
 const MenuItemModel =
   (mongoose.models.MenuItem as mongoose.Model<MenuItem>) ||
   mongoose.model<MenuItem>("MenuItem", MenuItemSchema);
+
 export default MenuItemModel;

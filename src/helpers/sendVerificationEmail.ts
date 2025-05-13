@@ -14,7 +14,7 @@ export async function sendVerificationEmail(
     );
     await sendEmail({
       email,
-      subject: "NUSTBites | Verification Code",
+      subject: "nustbites | Verification Code",
       emailHtml,
     });
     return {

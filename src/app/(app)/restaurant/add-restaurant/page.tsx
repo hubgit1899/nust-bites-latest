@@ -177,7 +177,7 @@ const AddRestaurantPage = () => {
   };
 
   return (
-    <div className="flex justify-center items-center mb-15 mt-5">
+    <div className="flex justify-center items-center">
       <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-full max-w-2xl border p-6 overflow-auto">
         <legend className="fieldset-legend text-3xl font-bold">
           Add <span className="text-primary">Restaurant</span>

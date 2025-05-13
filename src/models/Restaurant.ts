@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 import type { Location } from "@/types/location";
+import { getCurrentMinutesInPakistan } from "@/helpers/localTime";
 
 export interface Restaurant extends Document {
   name: string;
@@ -19,6 +20,9 @@ export interface Restaurant extends Document {
   rating: number;
   ratingCount: number;
   online?: boolean; // virtual
+
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const RestaurantSchema: Schema<Restaurant> = new Schema(
@@ -51,30 +55,6 @@ const RestaurantSchema: Schema<Restaurant> = new Schema(
     toObject: { virtuals: true },
   }
 );
-
-// Helper function to get current minutes from midnight in Pakistan timezone
-function getCurrentMinutesInPakistan() {
-  try {
-    // Use the Intl API for better timezone handling
-    const now = new Date();
-    const formatter = new Intl.DateTimeFormat("en-US", {
-      timeZone: "Asia/Karachi", // Pakistan timezone
-      hour: "numeric",
-      minute: "numeric",
-      hour12: false,
-    });
-
-    const timeString = formatter.format(now);
-    const [hours, minutes] = timeString.split(":").map(Number);
-
-    return hours * 60 + minutes;
-  } catch (error) {
-    // Fallback to server time if timezone conversion fails
-    console.error("Timezone conversion error:", error);
-    const now = new Date();
-    return now.getHours() * 60 + now.getMinutes();
-  }
-}
 
 // Virtual for dynamic "online" value
 RestaurantSchema.virtual("online").get(function (this: any) {

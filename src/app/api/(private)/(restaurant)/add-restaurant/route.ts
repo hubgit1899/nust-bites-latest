@@ -1,26 +1,23 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import dbConnect from "@/lib/dbConnect";
 import RestaurantModel from "@/models/Restaurant";
 import { addRestaurantSchema } from "@/schemas/addRestaurantSchema";
 import { sendRestaurantSubmissionEmail } from "@/helpers/sendNewRestaurantAddedEmail";
 import UserModel from "@/models/User";
-import extractPublicId from "@/helpers/extractPublicId";
-import { deleteCloudinaryImage } from "@/lib/cloudinary";
+import { cleanupCloudinaryImage } from "@/helpers/cleanupCloudinaryImage";
 
 export async function POST(req: Request) {
   await dbConnect();
 
   const body = await req.json();
-
-  // Get logoImageURL first to extract publicId
   const { logoImageURL } = body || {};
-  const publicId = logoImageURL ? extractPublicId(logoImageURL) : null;
 
   const session = await getServerSession(authOptions);
   if (!session?.user?.isVerified) {
-    if (publicId) await deleteCloudinaryImage(publicId); // Cleanup
+    if (logoImageURL) await cleanupCloudinaryImage(logoImageURL);
     return NextResponse.json(
       { success: false, message: "Unauthorized or unverified user." },
       { status: 401 }
@@ -31,7 +28,7 @@ export async function POST(req: Request) {
 
   const parsed = addRestaurantSchema.safeParse(body);
   if (!parsed.success) {
-    if (publicId) await deleteCloudinaryImage(publicId); // Cleanup
+    if (logoImageURL) await cleanupCloudinaryImage(logoImageURL);
     return NextResponse.json(
       {
         success: false,
@@ -47,17 +44,40 @@ export async function POST(req: Request) {
   // Check order code uniqueness
   const existing = await RestaurantModel.findOne({ orderCode });
   if (existing) {
-    if (publicId) await deleteCloudinaryImage(publicId); // Cleanup
+    if (logoImageURL) await cleanupCloudinaryImage(logoImageURL);
     return NextResponse.json(
       { success: false, message: "Order code already in use." },
       { status: 400 }
     );
   }
 
-  const user = await UserModel.findById(_id).populate("ownedRestaurantIds");
+  // Check user restaurant limits using aggregation
+  const userAggregation = await UserModel.aggregate([
+    { $match: { _id: new mongoose.Types.ObjectId(_id) } },
+    {
+      $lookup: {
+        from: "restaurants",
+        localField: "ownedRestaurantIds",
+        foreignField: "_id",
+        as: "ownedRestaurants",
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        username: 1,
+        email: 1,
+        maxOwnedRestaurants: 1,
+        isRestaurantOwner: 1,
+        currentOwnedCount: { $size: "$ownedRestaurants" },
+      },
+    },
+  ]);
+
+  const user = userAggregation[0];
 
   if (!user || user.maxOwnedRestaurants === undefined) {
-    if (publicId) await deleteCloudinaryImage(publicId); // Cleanup
+    if (logoImageURL) await cleanupCloudinaryImage(logoImageURL);
     return NextResponse.json(
       {
         success: false,
@@ -68,8 +88,8 @@ export async function POST(req: Request) {
     );
   }
 
-  if (user.ownedRestaurantIds.length >= user.maxOwnedRestaurants) {
-    if (publicId) await deleteCloudinaryImage(publicId); // Cleanup
+  if (user.currentOwnedCount >= user.maxOwnedRestaurants) {
+    if (logoImageURL) await cleanupCloudinaryImage(logoImageURL);
     return NextResponse.json(
       {
         success: false,
@@ -79,96 +99,93 @@ export async function POST(req: Request) {
     );
   }
 
-  // Create restaurant first
-  const restaurant = new RestaurantModel({
-    name,
-    logoImageURL,
-    accentColor,
-    orderCode,
-    location,
-    onlineTime,
-    owner: _id,
-  });
-
-  const wasRestaurantOwner = user.isRestaurantOwner;
+  // Start a session for transaction
+  const session2 = await mongoose.startSession();
+  session2.startTransaction();
 
   try {
-    await restaurant.save();
+    // Create restaurant
+    const restaurant = new RestaurantModel({
+      name,
+      logoImageURL,
+      accentColor,
+      orderCode,
+      location,
+      onlineTime,
+      owner: _id,
+    });
 
-    user.isRestaurantOwner = true;
+    // Save restaurant within transaction
+    await restaurant.save({ session: session2 });
 
-    if (restaurant._id) {
-      user.ownedRestaurantIds.push(
-        restaurant._id as (typeof user.ownedRestaurantIds)[0]
+    // Update user using updateOne to add restaurant ID and set isRestaurantOwner to true
+    const wasRestaurantOwner = user.isRestaurantOwner;
+
+    await UserModel.updateOne(
+      { _id: user._id },
+      {
+        $push: { ownedRestaurantIds: restaurant._id },
+        $set: { isRestaurantOwner: true },
+      },
+      { session: session2 }
+    );
+
+    // Commit the transaction
+    await session2.commitTransaction();
+    session2.endSession();
+
+    if (!email || !username) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "User email or username is missing.",
+        },
+        { status: 400 }
       );
     }
 
-    await user.save();
-  } catch (err) {
-    console.error("❌ Failed to update user, rolling back restaurant:", err);
+    const emailRes = await sendRestaurantSubmissionEmail(email, username, {
+      name: restaurant.name!,
+      orderCode: restaurant.orderCode!,
+      address: restaurant.location!.address || "Address not provided",
+      city: restaurant.location!.city || "City not provided",
+      accentColor: restaurant.accentColor!,
+    });
 
-    // Rollback restaurant
-    await RestaurantModel.findByIdAndDelete(restaurant._id);
-
-    // Rollback user changes
-    user.isRestaurantOwner = wasRestaurantOwner;
-    user.ownedRestaurantIds = user.ownedRestaurantIds.filter(
-      (id) => id.toString() !== restaurant._id?.toString()
-    );
-
-    try {
-      await user.save();
-    } catch (userRollbackErr) {
-      console.error("❌ Failed to rollback user changes:", userRollbackErr);
+    if (!emailRes.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: emailRes.message,
+        },
+        { status: 500 }
+      );
     }
 
-    // Cleanup uploaded image if needed
-    if (publicId) await deleteCloudinaryImage(publicId);
+    return NextResponse.json(
+      {
+        success: true,
+        message: `${restaurant.name} added successfully.`,
+        restaurant,
+        sessionRevalidated: !wasRestaurantOwner,
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    // Abort transaction in case of error
+    await session2.abortTransaction();
+    session2.endSession();
+
+    console.error("❌ Error during restaurant creation transaction:", error);
+
+    if (logoImageURL) await cleanupCloudinaryImage(logoImageURL);
 
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to finalize restaurant creation. Please try again.",
+        message: "Failed to create restaurant. Please try again.",
       },
       { status: 500 }
     );
   }
-
-  if (!email || !username) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "User email or username is missing.",
-      },
-      { status: 400 }
-    );
-  }
-
-  const emailRes = await sendRestaurantSubmissionEmail(email, username, {
-    name: restaurant.name!,
-    orderCode: restaurant.orderCode!,
-    address: restaurant.location!.address || "Address not provided",
-    city: restaurant.location!.city || "City not provided",
-    accentColor: restaurant.accentColor!,
-  });
-
-  if (!emailRes.success) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: emailRes.message,
-      },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json(
-    {
-      success: true,
-      message: `${restaurant.name} added successfully.`,
-      restaurant,
-      sessionRevalidated: !user.isRestaurantOwner,
-    },
-    { status: 201 }
-  );
 }
