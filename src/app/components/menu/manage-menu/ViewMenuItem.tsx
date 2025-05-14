@@ -11,6 +11,8 @@ import {
   Wifi,
   WifiOff,
   ShoppingCart,
+  Plus,
+  Minus,
 } from "lucide-react";
 import { formatTime } from "@/helpers/localTime";
 import { MenuItem, MenuOption } from "@/models/MenuItem";
@@ -153,18 +155,18 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
     <>
       {/* View Button */}
       <button
-        className="btn btn-sm gap-2 text-xs"
+        className="btn btn-xs sm:btn-sm gap-2 text-xs"
         style={{
-          backgroundColor: hexToRGBA(accentColor, 0.2),
-          color: accentColor,
+          backgroundColor: accentColor,
           borderColor: hexToRGBA(accentColor, 0.5),
+          color: "white",
         }}
         onClick={openModal}
       >
         View Item
       </button>
 
-      {/* Modal Dialog */}
+      {/* Main Modal Dialog */}
       <dialog
         ref={modalRef}
         id={`modal-${menuItem._id}`}
@@ -253,22 +255,36 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-2">
                 <button
-                  className="btn btn-sm btn-circle btn-outline border-none hover:bg-transparent hover:text-inherit"
+                  className="btn btn-sm btn-circle btn-outline border-none transition-colors"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  style={{
+                    color: accentColor,
+                    borderColor: accentColor,
+                    backgroundColor: "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = hexToRGBA(
+                      accentColor,
+                      0.1
+                    );
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                  }}
+                  onMouseDown={(e) => {
+                    e.currentTarget.style.backgroundColor = hexToRGBA(
+                      accentColor,
+                      0.2
+                    );
+                  }}
+                  onMouseUp={(e) => {
+                    e.currentTarget.style.backgroundColor = hexToRGBA(
+                      accentColor,
+                      0.1
+                    );
+                  }}
                 >
-                  <MinusCircle
-                    className="rounded-full transition-colors duration-200"
-                    style={{ color: accentColor }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor =
-                        accentColor || "#000";
-                      e.currentTarget.style.color = "#fff";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent";
-                      e.currentTarget.style.color = accentColor || "#000";
-                    }}
-                  />
+                  <Minus />
                 </button>
 
                 <span className="text-lg font-medium w-8 text-center">
@@ -276,22 +292,36 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
                 </span>
 
                 <button
-                  className="btn btn-sm btn-circle btn-outline border-none hover:bg-transparent hover:text-inherit"
+                  className="btn btn-sm btn-circle btn-outline border-none transition-colors"
                   onClick={() => setQuantity(quantity + 1)}
+                  style={{
+                    color: accentColor,
+                    borderColor: accentColor,
+                    backgroundColor: "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = hexToRGBA(
+                      accentColor,
+                      0.1
+                    );
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                  }}
+                  onMouseDown={(e) => {
+                    e.currentTarget.style.backgroundColor = hexToRGBA(
+                      accentColor,
+                      0.2
+                    );
+                  }}
+                  onMouseUp={(e) => {
+                    e.currentTarget.style.backgroundColor = hexToRGBA(
+                      accentColor,
+                      0.1
+                    );
+                  }}
                 >
-                  <PlusCircle
-                    className="rounded-full transition-colors duration-200"
-                    style={{ color: accentColor }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor =
-                        accentColor || "#000";
-                      e.currentTarget.style.color = "#fff";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent";
-                      e.currentTarget.style.color = accentColor || "#000";
-                    }}
-                  />
+                  <Plus />
                 </button>
               </div>
 

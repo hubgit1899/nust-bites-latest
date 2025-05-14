@@ -5,26 +5,26 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { Restaurant } from "@/models/Restaurant";
 import { formatTime } from "@/helpers/localTime";
+import RestaurantSettingsModal from "@/app/components/restaurant/RestaurantSettingsModal";
 import {
   Binary,
   CalendarArrowDown,
   Clock,
   MapPin,
   Settings,
-  ShoppingBag,
   Star,
   Store,
-  TriangleAlert,
   UtensilsCrossed,
 } from "lucide-react";
+import PageLoading from "@/app/components/loading/PageLoading";
 
 export default function MyRestaurantsPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [selectedRestaurant, setSelectedRestaurant] =
     useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
-  const [updateLoading, setUpdateLoading] = useState(false);
-  const [overrideValue, setOverrideValue] = useState<number>(0);
+  const [isRestaurantSettingsModalOpen, setIsRestaurantSettingsModalOpen] =
+    useState(false);
 
   useEffect(() => {
     const fetchUserRestaurants = async () => {
@@ -47,20 +47,6 @@ export default function MyRestaurantsPage() {
     fetchUserRestaurants();
   }, []);
 
-  // Set override value when selecting a restaurant
-  useEffect(() => {
-    if (selectedRestaurant) {
-      setOverrideValue(selectedRestaurant.forceOnlineOverride || 0);
-    }
-  }, [selectedRestaurant]);
-
-  // Get color for online status button based on forceOnlineOverride
-  const getStatusButtonColor = (restaurant: Restaurant) => {
-    if (restaurant.forceOnlineOverride === 1) return "btn-success";
-    if (restaurant.forceOnlineOverride === -1) return "btn-error";
-    return restaurant.online ? "btn-success" : "btn-error";
-  };
-
   // Get status text based on forceOnlineOverride and online status
   const getStatusText = (restaurant: Restaurant) => {
     if (restaurant.forceOnlineOverride === 1) return "FORCED ONLINE";
@@ -75,58 +61,6 @@ export default function MyRestaurantsPage() {
     return restaurant.online ? "badge-success" : "badge-error";
   };
 
-  // Handle update of forceOnlineOverride
-  const handleOverrideUpdate = async () => {
-    if (!selectedRestaurant) return;
-
-    setUpdateLoading(true);
-    try {
-      const res = await fetch(
-        `/api/my-restaurants/${selectedRestaurant._id}/overrideDefaultOnline`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            override: overrideValue,
-          }),
-        }
-      );
-
-      const data = await res.json();
-
-      if (data.success) {
-        // Update the restaurants list with the updated restaurant
-        setRestaurants((prevRestaurants) =>
-          prevRestaurants.map((r) => {
-            if (r._id === selectedRestaurant._id) {
-              // Create a new object while preserving the Restaurant type
-              return {
-                ...r,
-                forceOnlineOverride: overrideValue,
-              } as Restaurant;
-            }
-            return r;
-          })
-        );
-        toast.success(`Restaurant status override updated successfully`);
-        (
-          document.getElementById(
-            "online_status_modal"
-          ) as HTMLDialogElement | null
-        )?.close();
-      } else {
-        toast.error(data.message || "Failed to update status override");
-      }
-    } catch (err) {
-      console.error("Error updating override:", err);
-      toast.error("Something went wrong while updating status");
-    } finally {
-      setUpdateLoading(false);
-    }
-  };
-
   return (
     <div className="flex flex-col flex-grow min-h-[calc(100vh-var(--navbar-height)-var(--footer-height,4rem))]">
       <h1 className="text-2xl font-bold flex items-center gap-2 mb-6">
@@ -135,9 +69,7 @@ export default function MyRestaurantsPage() {
       </h1>
 
       {loading ? (
-        <div className="flex-grow flex justify-center items-center">
-          <span className="loading loading-bars loading-lg"></span>
-        </div>
+        <PageLoading />
       ) : (
         <>
           {!restaurants.length ? (
@@ -265,26 +197,13 @@ export default function MyRestaurantsPage() {
                       <div className="flex justify-center items-center">
                         <div
                           className="tooltip md:tooltip-right tooltip-top"
-                          data-tip="Edit Restaurant"
+                          data-tip="Orders"
                         >
                           <Link
-                            href={`/restaurants/${r._id}/edit`}
+                            href={`/restaurants/${r._id}/orders`}
                             className="btn btn-circle btn-primary"
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-6 w-6"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
+                            <CalendarArrowDown />
                           </Link>
                         </div>
                       </div>
@@ -306,23 +225,14 @@ export default function MyRestaurantsPage() {
                       <div className="flex justify-center items-center">
                         <div
                           className="tooltip md:tooltip-right tooltip-top z-1"
-                          data-tip={
-                            !r.isVerified
-                              ? "Please wait for verification"
-                              : "Manage Online Status"
-                          }
+                          data-tip={"Settings"}
                         >
                           <button
-                            disabled={!r.isVerified}
                             onClick={() => {
                               setSelectedRestaurant(r);
-                              (
-                                document.getElementById(
-                                  "online_status_modal"
-                                ) as HTMLDialogElement | null
-                              )?.showModal();
+                              setIsRestaurantSettingsModalOpen(true);
                             }}
-                            className={`btn btn-circle ${getStatusButtonColor(r)}`}
+                            className={`btn btn-circle bg-gray-300 hover:bg-gray-400 border-none text-gray-600 hover:text-gray-800`}
                           >
                             <Settings />
                           </button>
@@ -348,116 +258,25 @@ export default function MyRestaurantsPage() {
                 ))}
               </div>
 
-              <dialog
-                id="online_status_modal"
-                className="modal modal-bottom sm:modal-middle backdrop-blur-xs"
-              >
-                <div className="modal-box">
-                  <h3 className="font-bold text-lg">
-                    Manage Restaurant Online Status
-                  </h3>
-
-                  <div className="py-4 text-sm">
-                    <div className="mb-4 text-warning flex items-start gap-1">
-                      <TriangleAlert
-                        size={20}
-                        className="text-warning shrink-0"
-                      />
-                      <p className="text-sm leading-snug">
-                        <span className="font-semibold">Warning:</span>{" "}
-                        Overriding the default behavior will prevent the
-                        restaurant from{" "}
-                        <span className="font-semibold">
-                          automatically switching online/offline
-                        </span>{" "}
-                        based on operating hours.
-                      </p>
-                    </div>
-
-                    <div className="border rounded-lg p-4 bg-base-200">
-                      <p className="mb-3 font-medium">
-                        Choose status override:
-                      </p>
-
-                      {/* Three-state toggle */}
-                      <div className="flex justify-center">
-                        <div className="join w-full max-w-md">
-                          <button
-                            className={`join-item btn flex-1 btn-soft ${overrideValue === -1 ? "btn-error" : ""}`}
-                            onClick={() => setOverrideValue(-1)}
-                            type="button"
-                          >
-                            Force Offline
-                          </button>
-
-                          <button
-                            className={`join-item btn flex-1 btn-soft ${overrideValue === 0 ? "btn-info" : ""}`}
-                            onClick={() => setOverrideValue(0)}
-                            type="button"
-                          >
-                            Default
-                          </button>
-
-                          <button
-                            className={`join-item btn flex-1 btn-soft ${overrideValue === 1 ? "btn-success" : ""}`}
-                            onClick={() => setOverrideValue(1)}
-                            type="button"
-                          >
-                            Force Online
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="mt-3 text-center text-xs">
-                        {overrideValue === -1 && (
-                          <p className="text-error">
-                            Restaurant will always be offline regardless of
-                            operating hours
-                          </p>
-                        )}
-                        {overrideValue === 0 && (
-                          <p className="text-info">
-                            Restaurant will follow normal operating hours
-                          </p>
-                        )}
-                        {overrideValue === 1 && (
-                          <p className="text-success">
-                            Restaurant will always be online regardless of
-                            operating hours
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 mt-4">
-                    <form method="dialog" className="flex justify-start">
-                      <button className="btn">Cancel</button>
-                    </form>
-
-                    <div className="flex justify-end">
-                      <button
-                        className="btn btn-primary"
-                        onClick={handleOverrideUpdate}
-                        disabled={updateLoading}
-                      >
-                        {updateLoading ? (
-                          <>
-                            <span className="loading loading-spinner loading-sm"></span>
-                            Updating...
-                          </>
-                        ) : (
-                          "Confirm"
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <form method="dialog" className="modal-backdrop">
-                  <button>close</button>
-                </form>
-              </dialog>
+              {selectedRestaurant && (
+                <RestaurantSettingsModal
+                  restaurant={selectedRestaurant}
+                  isOpen={isRestaurantSettingsModalOpen}
+                  onSuccess={(updatedRestaurant) => {
+                    setRestaurants((prevRestaurants) =>
+                      prevRestaurants.map((r) =>
+                        r._id === updatedRestaurant._id ? updatedRestaurant : r
+                      )
+                    );
+                    setIsRestaurantSettingsModalOpen(false);
+                    setSelectedRestaurant(null);
+                  }}
+                  onClose={() => {
+                    setIsRestaurantSettingsModalOpen(false);
+                    setSelectedRestaurant(null);
+                  }}
+                />
+              )}
             </>
           )}
         </>

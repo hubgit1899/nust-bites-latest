@@ -13,6 +13,7 @@ import { Restaurant } from "@/models/Restaurant";
 import { useRouter } from "next/navigation";
 import Cart from "../components/navbar/Cart";
 import Avatar from "../components/navbar/Avatar";
+import CustomerDetailsModal from "../components/navbar/CustomerDetailsModal";
 
 const Navbar = () => {
   const navbarRef = useRef<HTMLDivElement | null>(null);
@@ -21,6 +22,8 @@ const Navbar = () => {
   const user = session?.user as User;
   const router = useRouter();
   const [, setNavbarHeight] = useState(0);
+  const [showCustomerDetailsModal, setShowCustomerDetailsModal] =
+    useState(false);
 
   const roles = {
     isCustomer: user?.isCustomer,
@@ -81,6 +84,13 @@ const Navbar = () => {
       );
     }
   }, [navbarRef.current]);
+
+  useEffect(() => {
+    // Show modal if user is verified but not a customer
+    if (user && !roles.isCustomer) {
+      setShowCustomerDetailsModal(true);
+    }
+  }, [user, roles.isCustomer]);
 
   return (
     <div className="mb-5">
@@ -217,6 +227,13 @@ const Navbar = () => {
                     <li>
                       <a>Settings</a>
                     </li>
+                    {roles.isSuperAdmin && (
+                      <li>
+                        <button onClick={() => router.push("/admin-dashboard")}>
+                          Admin Dashboard
+                        </button>
+                      </li>
+                    )}
                     {roles.isRestaurantOwner && (
                       <li>
                         <button
@@ -240,7 +257,9 @@ const Navbar = () => {
                     <li>
                       <button
                         className="btn btn-xs mt-1 btn-outline btn-error"
-                        onClick={() => signOut()}
+                        onClick={() => {
+                          signOut({ callbackUrl: "/" });
+                        }}
                       >
                         Logout
                       </button>
@@ -266,6 +285,10 @@ const Navbar = () => {
           )}
         </div>
       </div>
+      <CustomerDetailsModal
+        isOpen={showCustomerDetailsModal}
+        onClose={() => setShowCustomerDetailsModal(false)}
+      />
     </div>
   );
 };

@@ -10,7 +10,6 @@ import { MenuItem } from "@/models/MenuItem";
 import { z } from "zod";
 import {
   Plus,
-  Minus,
   ArrowLeft,
   ArrowRight,
   X,
@@ -31,12 +30,14 @@ interface AddMenuItemModalProps {
   restaurantId: string;
   categories: Category[];
   onSuccess: (newMenuItem: MenuItem) => void;
+  accentColor: string;
 }
 
 export const AddMenuItemModal = ({
   restaurantId,
   categories,
   onSuccess,
+  accentColor,
 }: AddMenuItemModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -187,7 +188,9 @@ export const AddMenuItemModal = ({
 
     try {
       if (!selectedFile) {
-        toast.error("Please select an image for the menu item");
+        toast.error("Please select an image for the menu item", {
+          position: "top-right",
+        });
         setIsSubmitting(false);
         return;
       }
@@ -203,7 +206,10 @@ export const AddMenuItemModal = ({
           !submissionData.onlineTime.endTimeString
         ) {
           toast.error(
-            "Please set both start and end times for online availability"
+            "Please set both start and end times for online availability",
+            {
+              position: "top-right",
+            }
           );
           setIsSubmitting(false);
           return;
@@ -241,6 +247,7 @@ export const AddMenuItemModal = ({
           description:
             axiosError.response?.data.message ??
             "Failed to get upload signature. Please login again.",
+          position: "top-right",
         });
         setIsSubmitting(false);
         return;
@@ -320,9 +327,9 @@ export const AddMenuItemModal = ({
       id="add_menu_item_modal"
       className="modal modal-bottom sm:modal-middle backdrop-blur-xs"
     >
-      <div className="modal-box max-w-4xl bg-base-100 p-0 overflow-hidden">
+      <div className="modal-box max-w-4xl bg-base-100 p-0 overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[80vh]">
         {/* Modal Header */}
-        <div className="bg-base-200 p-3 flex items-center justify-between">
+        <div className="bg-base-200 p-3 flex items-center justify-between shrink-0">
           <h2 className="text-xl font-bold">Add New Menu Item</h2>
           <button
             onClick={handleCancel}
@@ -332,8 +339,8 @@ export const AddMenuItemModal = ({
           </button>
         </div>
 
-        {/* Tabs Navigation - Optimized with min-width to prevent overflow issues */}
-        <div className="tabs tabs-boxed bg-base-200 px-2 py-1 flex flex-nowrap overflow-x-auto justify-center items-center gap-12">
+        {/* Tabs Navigation */}
+        <div className="tabs tabs-boxed bg-base-200 px-2 py-1 flex flex-nowrap overflow-x-auto justify-center items-center gap-12 shrink-0">
           <button
             className={`tab min-w-max whitespace-nowrap ${activeTab === "basic" ? "tab-active bg-neutral text-neutral-content rounded-t-field" : ""}`}
             onClick={() => setActiveTab("basic")}
@@ -364,7 +371,8 @@ export const AddMenuItemModal = ({
           </button>
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto p-4 ">
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto p-4">
           <form
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4 w-full"
@@ -459,23 +467,6 @@ export const AddMenuItemModal = ({
                   )}
                 </div>
               </fieldset>
-
-              <div className="flex justify-between mt-4">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={handleCancel}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary gap-1"
-                  onClick={() => setActiveTab("image")}
-                >
-                  Next <ArrowRight size={18} />
-                </button>
-              </div>
             </div>
 
             {/* Image Upload Section */}
@@ -531,23 +522,6 @@ export const AddMenuItemModal = ({
                   )}
                 </div>
               </fieldset>
-
-              <div className="flex justify-between mt-4">
-                <button
-                  type="button"
-                  className="btn btn-secondary gap-1"
-                  onClick={() => setActiveTab("basic")}
-                >
-                  <ArrowLeft size={18} /> Back
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary gap-1"
-                  onClick={() => setActiveTab("availability")}
-                >
-                  Next <ArrowRight size={18} />
-                </button>
-              </div>
             </div>
 
             {/* Availability Section */}
@@ -625,23 +599,6 @@ export const AddMenuItemModal = ({
                   </div>
                 )}
               </fieldset>
-
-              <div className="flex justify-between mt-4">
-                <button
-                  type="button"
-                  className="btn btn-secondary gap-1"
-                  onClick={() => setActiveTab("image")}
-                >
-                  <ArrowLeft size={18} /> Back
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary gap-1"
-                  onClick={() => setActiveTab("options")}
-                >
-                  Next <ArrowRight size={18} />
-                </button>
-              </div>
             </div>
 
             {/* Options Section */}
@@ -782,8 +739,81 @@ export const AddMenuItemModal = ({
                   </div>
                 )}
               </fieldset>
+            </div>
+          </form>
+        </div>
 
-              <div className="flex justify-between mt-4">
+        {/* Fixed Footer */}
+        <div className="bg-base-200 p-4 border-t border-base-300 shrink-0">
+          <div className="flex justify-between">
+            {activeTab === "basic" ? (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn gap-1"
+                  onClick={() => setActiveTab("image")}
+                  style={{
+                    backgroundColor: accentColor,
+                    borderColor: accentColor,
+                    color: "white",
+                  }}
+                >
+                  Next <ArrowRight size={18} />
+                </button>
+              </>
+            ) : activeTab === "image" ? (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-secondary gap-1"
+                  onClick={() => setActiveTab("basic")}
+                >
+                  <ArrowLeft size={18} /> Back
+                </button>
+                <button
+                  type="button"
+                  className="btn gap-1"
+                  onClick={() => setActiveTab("availability")}
+                  style={{
+                    backgroundColor: accentColor,
+                    borderColor: accentColor,
+                    color: "white",
+                  }}
+                >
+                  Next <ArrowRight size={18} />
+                </button>
+              </>
+            ) : activeTab === "availability" ? (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-secondary gap-1"
+                  onClick={() => setActiveTab("image")}
+                >
+                  <ArrowLeft size={18} /> Back
+                </button>
+                <button
+                  type="button"
+                  className="btn gap-1"
+                  onClick={() => setActiveTab("options")}
+                  style={{
+                    backgroundColor: accentColor,
+                    borderColor: accentColor,
+                    color: "white",
+                  }}
+                >
+                  Next <ArrowRight size={18} />
+                </button>
+              </>
+            ) : (
+              <>
                 <button
                   type="button"
                   className="btn btn-secondary gap-1"
@@ -793,7 +823,7 @@ export const AddMenuItemModal = ({
                 </button>
                 <button
                   type="button"
-                  className="btn btn-primary"
+                  className="btn"
                   disabled={isSubmitting}
                   onClick={() => {
                     // Check if form is valid before submitting
@@ -835,6 +865,11 @@ export const AddMenuItemModal = ({
                       }
                     });
                   }}
+                  style={{
+                    backgroundColor: accentColor,
+                    borderColor: accentColor,
+                    color: "white",
+                  }}
                 >
                   {isSubmitting ? (
                     <>
@@ -845,9 +880,9 @@ export const AddMenuItemModal = ({
                     "Add Menu Item"
                   )}
                 </button>
-              </div>
-            </div>
-          </form>
+              </>
+            )}
+          </div>
         </div>
       </div>
 

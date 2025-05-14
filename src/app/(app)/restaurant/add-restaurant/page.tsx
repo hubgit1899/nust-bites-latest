@@ -156,13 +156,17 @@ const AddRestaurantPage = () => {
 
       // 3. Save restaurant to your own database
       const response = await axios.post("/api/add-restaurant", data);
-      await update(); // 🔁 This refreshes the session
+
+      if (response.data.sessionRevalidated) {
+        toast.success("Session revalidated successfully!");
+        await update(); // 🔁 This refreshes the session
+      }
 
       toast.success("Restaurant added successfully!", {
         description: response.data.message,
       });
 
-      router.push("/dashboard");
+      router.push("/restaurant/my-restaurants");
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;
       console.error("❌ Error adding restaurant:", axiosError);
@@ -268,7 +272,7 @@ const AddRestaurantPage = () => {
                 <label className="label font-semibold">Order Code</label>
                 <input
                   type="text"
-                  placeholder="e.g. ss, k01"
+                  placeholder="e.g: SS, K01, FR5"
                   className="input input-bordered w-full"
                   {...form.register("orderCode")}
                 />

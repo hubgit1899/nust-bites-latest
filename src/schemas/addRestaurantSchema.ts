@@ -68,3 +68,8 @@ export const addRestaurantSchema = z.object({
     endTimeString: z.string().optional(),
   }),
 });
+
+// For partial updates to menu items
+export const updateRestaurantSchema = addRestaurantSchema
+  .partial()
+  .omit({ orderCode: true });

@@ -267,6 +267,63 @@ export default function ManageMenu() {
     }
   };
 
+  const handleMenuItemDeleted = (deletedItem: MenuItem) => {
+    // Remove the deleted item from menuItems
+    const updatedMenuItems = menuItems.filter(
+      (item) => item._id !== deletedItem._id
+    );
+    setMenuItems(updatedMenuItems);
+    setFilteredItems(updatedMenuItems);
+
+    // Update categories
+    const categoryCounts = updatedMenuItems.reduce(
+      (acc: { [key: string]: number }, item: MenuItem) => {
+        acc[item.category] = (acc[item.category] || 0) + 1;
+        return acc;
+      },
+      {}
+    );
+
+    // Convert to array and filter out categories with 0 items
+    const categoryList = Object.entries(categoryCounts)
+      .filter(([_, count]) => count > 0)
+      .map(([name, count]) => ({
+        name,
+        count: Number(count),
+      }));
+
+    setCategories(categoryList);
+
+    // Update grouped items
+    const newGroupedItems = updatedMenuItems.reduce(
+      (acc: Record<string, MenuItem[]>, item) => {
+        if (!acc[item.category]) {
+          acc[item.category] = [];
+        }
+        acc[item.category].push(item);
+        return acc;
+      },
+      {}
+    );
+    setGroupedItems(newGroupedItems);
+
+    // Update last updated timestamp
+    const now = new Date();
+    setLastUpdated(now);
+
+    // Recalculate stats with the updated menu items
+    calculateStats(updatedMenuItems);
+
+    // If we were viewing the deleted item's category and it's now empty,
+    // reset the active filter
+    if (
+      activeFilter === deletedItem.category &&
+      categoryCounts[deletedItem.category] === 0
+    ) {
+      setActiveFilter("");
+    }
+  };
+
   const openAddMenuItemModal = () => {
     const modal = document.getElementById(
       "add_menu_item_modal"
@@ -298,7 +355,6 @@ export default function ManageMenu() {
   const onlinePercentage =
     availableItems > 0 ? Math.round((onlineItems / availableItems) * 100) : 0;
 
-  if (loading) return <PageLoading />;
   if (error) return <div className="alert alert-error">{error}</div>;
 
   // Render category group
@@ -319,6 +375,7 @@ export default function ManageMenu() {
             accentColor={restaurant?.accentColor!}
             categories={categories}
             onUpdate={handleMenuItemUpdated}
+            onDelete={handleMenuItemDeleted}
           />
         ))}
       </div>
@@ -326,192 +383,203 @@ export default function ManageMenu() {
   );
 
   return (
-    <div className="flex flex-col flex-grow mb-50">
-      {/* Header with restaurant name */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 w-full">
-        {/* Left side - Heading */}
-        <h1 className="text-2xl font-bold flex items-center gap-2 mb-3 md:mb-0">
-          <UtensilsCrossed
-            size={24}
-            style={{ color: restaurant?.accentColor }}
-          />
-          <span>Manage Menu</span>
-          <span className="font-normal text-base-content/70">
-            {restaurant?.name || ""}
-          </span>
-        </h1>
-
-        {/* Right side - Buttons */}
-
-        {menuItems.length > 0 && (
-          <div className="flex gap-2 w-full md:w-auto">
-            {/* Add Menu Item Button */}
-            <button
-              className="btn btn-sm md:btn-md gap-2 flex-1 md:flex-none"
-              style={{
-                backgroundColor: restaurant?.accentColor,
-                color: "white",
-                borderColor: restaurant?.accentColor,
-              }}
-              onClick={openAddMenuItemModal}
-            >
-              <Plus size={16} />
-              Add Menu Item
-            </button>
-
-            {/* Batch Operations Button */}
-            <button
-              className="btn btn-sm md:btn-md btn-outline gap-2 flex-1 md:flex-none"
-              style={{
-                color: restaurant?.accentColor,
-                borderColor: restaurant?.accentColor,
-              }}
-            >
-              <Settings2 size={16} />
-              Batch Operations
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className=" bg-base-200/50 rounded-lg shadow-sm p-4 flex flex-col">
-          <div className="stat-title flex items-center gap-2 text-sm text-base-content/70">
-            <ShoppingBag size={14} />
-            Total Menu Items
-          </div>
-          <div className="stat-value mt-1 text-2xl">{totalMenuItems}</div>
-          <div className="stat-desc mt-1 text-xs">
-            Updated {lastUpdated.toLocaleDateString()}
-          </div>
-        </div>
-
-        <div className=" bg-base-200/50 rounded-lg shadow-sm p-4 flex flex-col">
-          <div className="stat-title flex items-center gap-2 text-sm text-base-content/70">
-            <CheckCircle size={14} />
-            Available Items
-          </div>
-          <div className="stat-value mt-1 text-2xl">{availableItems}</div>
-          <div className="stat-desc mt-1 text-xs">
-            <div className="w-full bg-base-200 rounded-full h-1.5">
-              <div
-                className="h-1.5 rounded-full"
-                style={{
-                  width: `${availablePercentage}%`,
-                  backgroundColor: restaurant?.accentColor,
-                }}
-              ></div>
-            </div>
-            <span className="font-semibold">{availablePercentage}% </span>
-            of total items
-          </div>
-        </div>
-
-        <div className=" bg-base-200/50 rounded-lg shadow-sm p-4 flex flex-col">
-          <div className="stat-title flex items-center gap-2 text-sm text-base-content/70">
-            <Wifi size={14} />
-            Online Items
-          </div>
-          <div className="stat-value mt-1 text-2xl">{onlineItems}</div>
-          <div className="stat-desc mt-1 text-xs">
-            <div className="w-full bg-base-200 rounded-full h-1.5">
-              <div
-                className="h-1.5 rounded-full"
-                style={{
-                  width: `${onlinePercentage}%`,
-                  backgroundColor: restaurant?.accentColor,
-                }}
-              ></div>
-            </div>
-            <span className="font-semibold">{onlinePercentage}% </span>
-            of available items
-          </div>
-        </div>
-
-        <div className=" bg-base-200/50 rounded-lg shadow-sm p-4 flex flex-col">
-          <div className="stat-title flex items-center gap-2 text-sm text-base-content/70">
-            <Category size={14} />
-            Categories
-          </div>
-          <div className="stat-value mt-1 text-2xl">{totalCategories}</div>
-          <div className="stat-desc mt-1 text-xs">
-            Across {totalMenuItems} menu items
-          </div>
-        </div>
-      </div>
-
-      {/* Category Navigation Bar with integrated search and filter */}
-      {categories.length > 0 && (
-        <CategoryNavbar
-          categories={categories}
-          accentColor={restaurant?.accentColor}
-          onSelectCategory={handleCategorySelect}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          sortOption={sortOption}
-          setSortOption={setSortOption}
-        />
-      )}
-
-      {/* Menu Items Display */}
-      {menuItems.length === 0 ? (
-        <div
-          className="text-center p-8 bg-base-200 rounded-lg border border-base-200"
-          style={{ backgroundColor: hexToRGBA(restaurant?.accentColor!, 0.15) }}
-        >
-          <div className="flex flex-col items-center gap-4">
-            <UtensilsCrossed size={48} className="opacity-30" />
-            <p className="text-lg">No menu items found.</p>
-            <p className="text-sm opacity-70 mt-2">
-              Add your first menu item to get started!
-            </p>
-            <button
-              className="btn mt-4"
-              style={{
-                backgroundColor: restaurant?.accentColor,
-                color: "white",
-              }}
-              onClick={openAddMenuItemModal}
-            >
-              <Plus size={16} />
-              Add Menu Item
-            </button>
-          </div>
-        </div>
-      ) : filteredItems.length === 0 ? (
-        <div
-          className="text-center p-8 bg-base-200 rounded-lg border border-base-200"
-          style={{ backgroundColor: hexToRGBA(restaurant?.accentColor!, 0.15) }}
-        >
-          <div className="flex flex-col items-center gap-4">
-            <Search size={48} className="opacity-30" />
-            <p className="text-lg">No items match your search.</p>
-            <button
-              className="btn btn-ghost mt-4"
-              onClick={() => {
-                setSearchTerm("");
-                setActiveFilter("");
-                setSortOption("default");
-              }}
-            >
-              Clear Filters
-            </button>
-          </div>
-        </div>
+    <div className="flex flex-col flex-grow min-h-[calc(100vh-var(--navbar-height)-var(--footer-height,4rem))]">
+      {loading ? (
+        <PageLoading />
       ) : (
-        // Always display items grouped by category with headings
-        Object.entries(groupedItems).map(([category, items]) => {
-          return renderCategoryGroup(category, items);
-        })
-      )}
+        <>
+          {/* Header with restaurant name */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 w-full">
+            {/* Left side - Heading */}
+            <h1 className="text-2xl font-bold flex items-center gap-2 mb-3 md:mb-0">
+              <UtensilsCrossed
+                size={24}
+                style={{ color: restaurant?.accentColor }}
+              />
+              <span>Manage Menu</span>
+              <span className="font-normal text-base-content/70">
+                {restaurant?.name || ""}
+              </span>
+            </h1>
 
-      {/* Add Menu Item Modal */}
-      <AddMenuItemModal
-        restaurantId={id}
-        categories={categories}
-        onSuccess={handleMenuItemAdded}
-      />
+            {/* Right side - Buttons */}
+
+            {menuItems.length > 0 && (
+              <div className="flex gap-2 w-full md:w-auto">
+                {/* Add Menu Item Button */}
+                <button
+                  className="btn btn-sm md:btn-md gap-2 flex-1 md:flex-none"
+                  style={{
+                    backgroundColor: restaurant?.accentColor,
+                    color: "white",
+                    borderColor: restaurant?.accentColor,
+                  }}
+                  onClick={openAddMenuItemModal}
+                >
+                  <Plus size={16} />
+                  Add Menu Item
+                </button>
+
+                {/* Batch Operations Button */}
+                <button
+                  className="btn btn-sm md:btn-md btn-outline gap-2 flex-1 md:flex-none"
+                  style={{
+                    color: restaurant?.accentColor,
+                    borderColor: restaurant?.accentColor,
+                  }}
+                >
+                  <Settings2 size={16} />
+                  Batch Operations
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className=" bg-base-200/50 rounded-lg shadow-sm p-4 flex flex-col">
+              <div className="stat-title flex items-center gap-2 text-sm text-base-content/70">
+                <ShoppingBag size={14} />
+                Total Menu Items
+              </div>
+              <div className="stat-value mt-1 text-2xl">{totalMenuItems}</div>
+              <div className="stat-desc mt-1 text-xs">
+                Updated {lastUpdated.toLocaleDateString()}
+              </div>
+            </div>
+
+            <div className=" bg-base-200/50 rounded-lg shadow-sm p-4 flex flex-col">
+              <div className="stat-title flex items-center gap-2 text-sm text-base-content/70">
+                <CheckCircle size={14} />
+                Available Items
+              </div>
+              <div className="stat-value mt-1 text-2xl">{availableItems}</div>
+              <div className="stat-desc mt-1 text-xs">
+                <div className="w-full bg-base-200 rounded-full h-1.5">
+                  <div
+                    className="h-1.5 rounded-full"
+                    style={{
+                      width: `${availablePercentage}%`,
+                      backgroundColor: restaurant?.accentColor,
+                    }}
+                  ></div>
+                </div>
+                <span className="font-semibold">{availablePercentage}% </span>
+                of total items
+              </div>
+            </div>
+
+            <div className=" bg-base-200/50 rounded-lg shadow-sm p-4 flex flex-col">
+              <div className="stat-title flex items-center gap-2 text-sm text-base-content/70">
+                <Wifi size={14} />
+                Online Items
+              </div>
+              <div className="stat-value mt-1 text-2xl">{onlineItems}</div>
+              <div className="stat-desc mt-1 text-xs">
+                <div className="w-full bg-base-200 rounded-full h-1.5">
+                  <div
+                    className="h-1.5 rounded-full"
+                    style={{
+                      width: `${onlinePercentage}%`,
+                      backgroundColor: restaurant?.accentColor,
+                    }}
+                  ></div>
+                </div>
+                <span className="font-semibold">{onlinePercentage}% </span>
+                of available items
+              </div>
+            </div>
+
+            <div className=" bg-base-200/50 rounded-lg shadow-sm p-4 flex flex-col">
+              <div className="stat-title flex items-center gap-2 text-sm text-base-content/70">
+                <Category size={14} />
+                Categories
+              </div>
+              <div className="stat-value mt-1 text-2xl">{totalCategories}</div>
+              <div className="stat-desc mt-1 text-xs">
+                Across {totalMenuItems} menu items
+              </div>
+            </div>
+          </div>
+
+          {/* Category Navigation Bar with integrated search and filter */}
+          {categories.length > 0 && (
+            <CategoryNavbar
+              categories={categories}
+              accentColor={restaurant?.accentColor}
+              onSelectCategory={handleCategorySelect}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              sortOption={sortOption}
+              setSortOption={setSortOption}
+            />
+          )}
+
+          {/* Menu Items Display */}
+          {menuItems.length === 0 ? (
+            <div
+              className="text-center p-8 bg-base-200 rounded-lg border border-base-200"
+              style={{
+                backgroundColor: hexToRGBA(restaurant?.accentColor!, 0.15),
+              }}
+            >
+              <div className="flex flex-col items-center gap-4">
+                <UtensilsCrossed size={48} className="opacity-30" />
+                <p className="text-lg">No menu items found.</p>
+                <p className="text-sm opacity-70 mt-2">
+                  Add your first menu item to get started!
+                </p>
+                <button
+                  className="btn mt-4"
+                  style={{
+                    backgroundColor: restaurant?.accentColor,
+                    color: "white",
+                  }}
+                  onClick={openAddMenuItemModal}
+                >
+                  <Plus size={16} />
+                  Add Menu Item
+                </button>
+              </div>
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div
+              className="text-center p-8 bg-base-200 rounded-lg border border-base-200"
+              style={{
+                backgroundColor: hexToRGBA(restaurant?.accentColor!, 0.15),
+              }}
+            >
+              <div className="flex flex-col items-center gap-4">
+                <Search size={48} className="opacity-30" />
+                <p className="text-lg">No items match your search.</p>
+                <button
+                  className="btn btn-ghost mt-4"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setActiveFilter("");
+                    setSortOption("default");
+                  }}
+                >
+                  Clear Filters
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Always display items grouped by category with headings
+            Object.entries(groupedItems).map(([category, items]) => {
+              return renderCategoryGroup(category, items);
+            })
+          )}
+
+          {/* Add Menu Item Modal */}
+          <AddMenuItemModal
+            restaurantId={id}
+            categories={categories}
+            accentColor={restaurant!.accentColor}
+            onSuccess={handleMenuItemAdded}
+          />
+        </>
+      )}
     </div>
   );
 }

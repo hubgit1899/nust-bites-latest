@@ -13,6 +13,7 @@ import hexToRGBA from "@/lib/hexToRGBA";
 import ViewMenuItem from "./ViewMenuItem";
 import Image from "next/image";
 import { EditMenuItemModal } from "./EditMenuItemModal";
+import { DeleteMenuItemModal } from "./DeleteMenuItemModal";
 import { useState } from "react";
 
 interface Category {
@@ -25,6 +26,7 @@ interface MenuItemCardProps {
   accentColor: string;
   categories: Category[];
   onUpdate?: (updatedItem: MenuItem) => void;
+  onDelete?: (deletedItem: MenuItem) => void;
 }
 
 export default function MenuItemCard({
@@ -32,8 +34,10 @@ export default function MenuItemCard({
   accentColor,
   categories,
   onUpdate,
+  onDelete,
 }: MenuItemCardProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState(item);
 
   const handleUpdate = (updatedItem: MenuItem) => {
@@ -44,8 +48,19 @@ export default function MenuItemCard({
     setIsEditModalOpen(false);
   };
 
-  const handleCloseModal = () => {
+  const handleDelete = (deletedItem: MenuItem) => {
+    if (onDelete) {
+      onDelete(deletedItem);
+    }
+    setIsDeleteModalOpen(false);
+  };
+
+  const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalOpen(false);
   };
 
   return (
@@ -102,9 +117,12 @@ export default function MenuItemCard({
                   </button>
                 </li>
                 <li>
-                  <a className="text-error gap-2">
+                  <button
+                    className="text-error gap-2"
+                    onClick={() => setIsDeleteModalOpen(true)}
+                  >
                     <Trash2 size={16} /> Delete
-                  </a>
+                  </button>
                 </li>
               </ul>
             </div>
@@ -165,7 +183,15 @@ export default function MenuItemCard({
           categories={categories}
           accentColor={accentColor}
           onSuccess={handleUpdate}
-          onClose={handleCloseModal}
+          onClose={handleCloseEditModal}
+        />
+      )}
+
+      {isDeleteModalOpen && (
+        <DeleteMenuItemModal
+          menuItem={currentItem}
+          onSuccess={handleDelete}
+          onClose={handleCloseDeleteModal}
         />
       )}
     </>

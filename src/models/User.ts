@@ -8,9 +8,10 @@ export interface User extends Document {
   verifyCodeExpiry?: Date;
   isVerified: boolean;
 
+  isCustomer?: boolean;
   fullName?: string;
   phoneNumber?: string;
-  isCustomer?: boolean;
+
   orders?: Types.ObjectId[]; // <- Changed to ObjectId[]
 
   // Admin fields

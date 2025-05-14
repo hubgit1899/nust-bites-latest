@@ -4,18 +4,17 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import dbConnect from "@/lib/dbConnect";
 import RestaurantModel from "@/models/Restaurant";
 import { hasRestaurantAccess } from "@/lib/auth";
-import { revalidateTag } from "next/cache";
+import { updateRestaurantSchema } from "@/schemas/addRestaurantSchema";
+import { cleanupCloudinaryImage } from "@/helpers/cleanupCloudinaryImage";
 import mongoose from "mongoose";
 import { calculateRestaurantOnlineStatus } from "@/lib/onlineStatus";
+import { revalidateTag } from "next/cache";
 
-// Next.js 15 expects this exact type signature
-export async function PATCH(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   await dbConnect();
   const session = await getServerSession(authOptions);
-
-  const url = new URL(request.url);
-  const segments = url.pathname.split("/");
-  const restaurantId = segments[segments.indexOf("my-restaurants") + 1];
+  const body = await request.json();
+  const { _id, logoImageURL: newLogoURL } = body || {};
 
   if (!session?.user?._id) {
     return NextResponse.json(
@@ -24,34 +23,43 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  const { override } = await request.json(); // -1 | 1 | 0
+  if (!_id) {
+    return NextResponse.json(
+      { success: false, message: "Restaurant ID is required" },
+      { status: 400 }
+    );
+  }
+
+  const parsed = updateRestaurantSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid input",
+        errors: parsed.error.flatten().fieldErrors,
+      },
+      { status: 400 }
+    );
+  }
 
   // Start a MongoDB session for transaction
   const mongoSession = await mongoose.startSession();
   mongoSession.startTransaction();
 
   try {
-    // Use aggregation pipeline to get restaurant data
-    const results = await RestaurantModel.aggregate([
-      {
-        $match: {
-          _id: new mongoose.Types.ObjectId(restaurantId),
-          isVerified: true,
-        },
-      },
-    ]).session(mongoSession);
+    // First find the restaurant to check access
+    const restaurant =
+      await RestaurantModel.findById(_id).session(mongoSession);
 
-    if (results.length === 0) {
+    if (!restaurant) {
       await mongoSession.abortTransaction();
       return NextResponse.json(
-        { success: false, message: "Restaurant not found or is not verified." },
+        { success: false, message: "Restaurant not found" },
         { status: 404 }
       );
     }
 
-    const restaurant = results[0];
-
-    // Check access after fetching the data
     if (!hasRestaurantAccess(session.user, restaurant.owner)) {
       await mongoSession.abortTransaction();
       return NextResponse.json(
@@ -60,20 +68,16 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Check if the override value has changed
-    if (restaurant.forceOnlineOverride === override) {
-      await mongoSession.abortTransaction();
-      return NextResponse.json({
-        success: true,
-        message: "No changes to apply",
-        restaurant: calculateRestaurantOnlineStatus(restaurant),
-      });
+    // If there's a new logo URL and it's different from the existing one,
+    // clean up the old image
+    if (newLogoURL && newLogoURL !== restaurant.logoImageURL) {
+      await cleanupCloudinaryImage(restaurant.logoImageURL);
     }
 
-    // Update the restaurant using findOneAndUpdate to avoid race conditions
+    // Update the restaurant
     const updatedRestaurant = await RestaurantModel.findByIdAndUpdate(
-      restaurantId,
-      { $set: { forceOnlineOverride: override } },
+      _id,
+      { $set: parsed.data },
       { session: mongoSession, new: true }
     );
 
@@ -98,14 +102,21 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      message: "Restaurant updated successfully",
       restaurant: restaurantWithOnlineStatus,
     });
   } catch (error) {
     // Abort the transaction on error
     await mongoSession.abortTransaction();
-    console.error("❌ Error updating override:", error);
+    console.error("❌ Error updating restaurant:", error);
+
+    // If we have a new logo URL and the update failed, clean it up
+    if (newLogoURL) {
+      await cleanupCloudinaryImage(newLogoURL);
+    }
+
     return NextResponse.json(
-      { success: false, message: "Failed to update override" },
+      { success: false, message: "Failed to update restaurant" },
       { status: 500 }
     );
   } finally {
