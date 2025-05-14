@@ -83,6 +83,17 @@ function CategoryNavbar({
     return () => window.removeEventListener("scroll", handleScroll);
   }, [categories, activeCategory]);
 
+  // Scroll active category into view when it changes
+  useEffect(() => {
+    if (activeCategory && categoryRefs.current[activeCategory]) {
+      categoryRefs.current[activeCategory]?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [activeCategory]);
+
   const handleCategoryClick = (category: string) => {
     setActiveCategory(category);
     onSelectCategory(category);
