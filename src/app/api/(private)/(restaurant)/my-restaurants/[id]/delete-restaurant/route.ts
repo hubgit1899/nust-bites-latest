@@ -8,6 +8,7 @@ import User from "@/models/User";
 import { hasRestaurantAccess } from "@/lib/auth";
 import { cleanupCloudinaryImage } from "@/helpers/cleanupCloudinaryImage";
 import mongoose from "mongoose";
+import { revalidateTag } from "next/cache";
 
 export async function DELETE(request: NextRequest) {
   await dbConnect();
@@ -100,6 +101,10 @@ export async function DELETE(request: NextRequest) {
         },
         { status: 200 }
       );
+    }
+
+    if (restaurant.isVerified) {
+      revalidateTag("verified-restaurants");
     }
 
     return NextResponse.json(

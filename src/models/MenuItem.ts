@@ -42,11 +42,8 @@ const MenuItemSchema: Schema<MenuItem> = new Schema(
     category: { type: String, required: true },
     restaurant: {
       type: Schema.Types.ObjectId,
-      ref: "Restaurant",
+      ref: "restaurant",
       required: true,
-      autopopulate: {
-        select: "online forceOnlineOverride isVerified onlineTime",
-      },
     },
     available: { type: Boolean, default: true },
     forceOnlineOverride: { type: Boolean, default: false },

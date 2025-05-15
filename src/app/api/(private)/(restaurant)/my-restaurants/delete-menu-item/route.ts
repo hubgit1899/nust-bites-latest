@@ -7,6 +7,7 @@ import MenuItem from "@/models/MenuItem";
 import { hasRestaurantAccess } from "@/lib/auth";
 import { cleanupCloudinaryImage } from "@/helpers/cleanupCloudinaryImage";
 import mongoose from "mongoose";
+import { revalidateTag } from "next/cache";
 
 export async function DELETE(request: NextRequest) {
   await dbConnect();
@@ -82,6 +83,9 @@ export async function DELETE(request: NextRequest) {
     }
 
     await mongoSession.commitTransaction();
+
+    // Revalidate the cache for the restaurant
+    revalidateTag(`menu-items-${menuItem.restaurant}`);
 
     return NextResponse.json(
       { success: true, message: "Menu item deleted successfully." },

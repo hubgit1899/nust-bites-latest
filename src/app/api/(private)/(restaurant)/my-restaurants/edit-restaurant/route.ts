@@ -99,6 +99,7 @@ export async function PUT(request: NextRequest) {
 
     // Revalidate the cache for restaurants
     revalidateTag("verified-restaurants");
+    revalidateTag(`menu-items-${_id}`);
 
     return NextResponse.json({
       success: true,

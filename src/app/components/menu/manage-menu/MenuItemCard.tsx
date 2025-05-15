@@ -92,7 +92,7 @@ export default function MenuItemCard({
 
         <div className="card-body">
           <div className="flex justify-between items-start">
-            <h2 className="card-title text-base md:text-lg truncate pr-2">
+            <h2 className="card-title text-sm md:text-md truncate pr-2 overflow-hidden">
               {currentItem.name}
             </h2>
 
@@ -129,7 +129,7 @@ export default function MenuItemCard({
           </div>
 
           <div
-            className="badge badge-sm truncate max-w-[100%] overflow-hidden text-xs border-none"
+            className="badge badge-xs sm:badge-sm truncate max-w-full overflow-hidden text-xs border-none"
             style={{
               backgroundColor: hexToRGBA(accentColor, 0.3),
               color: "white",

@@ -143,7 +143,7 @@ const Navbar = () => {
                     {restaurants.map((restaurant) => (
                       <Link
                         key={String(restaurant._id)}
-                        href={`/restaurant/${restaurant._id}`}
+                        href={`/restaurant/menu/${restaurant._id}`}
                         className="block"
                       >
                         <div

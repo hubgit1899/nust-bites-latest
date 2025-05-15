@@ -172,7 +172,7 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
         id={`modal-${menuItem._id}`}
         className="modal modal-bottom sm:modal-middle"
       >
-        <div className="modal-box max-w-4xl bg-base-200 overflow-hidden">
+        <div className="modal-box max-w-4xl bg-base-200 overflow-hidden max-h-[90vh] sm:max-h-[80vh]">
           {/* Fixed header section with image */}
           <div className="sticky top-0 bg-base-200 z-10 pb-4">
             {/* Image section with fixed rounded corners */}

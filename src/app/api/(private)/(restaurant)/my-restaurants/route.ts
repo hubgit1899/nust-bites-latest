@@ -22,7 +22,7 @@ export async function GET() {
     const restaurants = await RestaurantModel.aggregate([
       // Match restaurants owned by the user
       { $match: { owner: new mongoose.Types.ObjectId(session.user._id) } },
-      // Sort by creation date (newest first)
+      // Sort by menu in descending order
       { $sort: { menu: -1 } },
       // Lookup related menu items
       {

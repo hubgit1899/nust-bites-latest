@@ -12,6 +12,7 @@ import {
   calculateMenuItemOnlineStatus,
   PlainRestaurant,
 } from "@/lib/onlineStatus";
+import { revalidateTag } from "next/cache";
 
 export async function PUT(request: NextRequest) {
   await dbConnect();
@@ -127,6 +128,9 @@ export async function PUT(request: NextRequest) {
 
     // Commit the transaction
     await mongoSession.commitTransaction();
+
+    // Revalidate the cache for the restaurant
+    revalidateTag(`menu-items-${existingMenuItem.restaurant}`);
 
     return NextResponse.json(
       {
