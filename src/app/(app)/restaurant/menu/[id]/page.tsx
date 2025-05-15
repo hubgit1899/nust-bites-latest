@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Search, UtensilsCrossed, Star, Clock, Navigation } from "lucide-react";
-import Image from "next/image";
 import { MenuItem } from "@/models/MenuItem";
 import { Restaurant } from "@/models/Restaurant";
 import PageLoading from "@/app/components/loading/PageLoading";

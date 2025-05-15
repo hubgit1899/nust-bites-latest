@@ -4,6 +4,7 @@ import "../globals.css";
 import AuthProvider from "../context/AuthProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "../context/ThemeProvider";
+import { CartProvider } from "../context/CartContext";
 import Navbar from "../ui/Navbar";
 import Footer from "../ui/Footer";
 
@@ -30,15 +31,17 @@ export default function RootLayout({
           className={`${poppins.variable} flex flex-col min-h-screen antialiased `}
         >
           <ThemeProvider>
-            <Navbar />
-            <div
-              className="w-full px-4 sm:px-6 lg:px-14 xl:px-20 max-w-[1600px] flex-grow mx-auto"
-              style={{ marginTop: "var(--navbar-height)" }}
-            >
-              <Toaster richColors />
-              <main>{children}</main>
-            </div>
-            <Footer />
+            <CartProvider>
+              <Navbar />
+              <div
+                className="w-full px-4 sm:px-6 lg:px-14 xl:px-20 max-w-[1600px] flex-grow mx-auto"
+                style={{ marginTop: "var(--navbar-height)" }}
+              >
+                <Toaster richColors />
+                <main>{children}</main>
+              </div>
+              <Footer />
+            </CartProvider>
           </ThemeProvider>
         </body>
       </AuthProvider>

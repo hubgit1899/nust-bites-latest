@@ -15,6 +15,8 @@ import {
 import { formatTime } from "@/helpers/localTime";
 import { MenuItem, MenuOption } from "@/models/MenuItem";
 import hexToRGBA from "@/lib/hexToRGBA";
+import { useCart, CartItem } from "@/app/context/CartContext";
+import { toast } from "sonner";
 
 interface ViewMenuItemProps {
   menuItem: MenuItem;
@@ -25,6 +27,7 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
   menuItem,
   accentColor,
 }) => {
+  const { addItem } = useCart();
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<
@@ -187,6 +190,47 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
     return menuItem.options
       .filter((option) => option.required)
       .every((option) => selectedOptions[option.optionHeader] !== undefined);
+  };
+
+  // Add to cart handler
+  const handleAddToCart = () => {
+    if (!allRequiredOptionsSelected()) {
+      toast.error("Please select all required options");
+      return;
+    }
+
+    // Convert selected options to the format needed for CartItem
+    const formattedOptions = Object.entries(selectedOptions).map(
+      ([header, index]) => {
+        const option = menuItem.options?.find(
+          (opt) => opt.optionHeader === header
+        );
+        return {
+          optionHeader: header,
+          selected: option?.name[index] || "",
+          additionalPrice: option?.additionalPrice[index] || 0,
+        };
+      }
+    );
+
+    const cartItem: CartItem = {
+      restaurantId: menuItem.restaurant._id as unknown as number,
+      menuItemId: menuItem._id as unknown as number,
+      name: menuItem.name,
+      basePrice: menuItem.basePrice,
+      imageURL: menuItem.imageURL,
+      category: menuItem.category,
+      quantity: quantity,
+      options: formattedOptions.length > 0 ? formattedOptions : undefined,
+    };
+
+    addItem(cartItem);
+    toast.success(`${menuItem.name} added to cart!`);
+
+    // Close modal after adding to cart
+    if (modalRef.current) {
+      modalRef.current.close();
+    }
   };
 
   return (
@@ -393,6 +437,7 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
                       : undefined,
                     color: allRequiredOptionsSelected() ? "white" : undefined,
                   }}
+                  onClick={handleAddToCart}
                 >
                   <ShoppingCart size={16} />
                   Add to Cart

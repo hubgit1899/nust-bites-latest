@@ -1,11 +1,9 @@
 "use client";
 
-import { Clock, Info, Wifi, WifiOff } from "lucide-react";
-import { formatTime } from "@/helpers/localTime";
 import { MenuItem } from "@/models/MenuItem";
 import hexToRGBA from "@/lib/hexToRGBA";
-import ViewMenuItem from "../manage-menu/ViewMenuItem";
 import Image from "next/image";
+import PublicViewMenuItem from "./PublicViewMenuItem";
 
 interface PublicMenuItemCardProps {
   item: MenuItem;
@@ -55,7 +53,7 @@ export default function PublicMenuItemCard({
           <span className="text-sm md:text-md lg:text-lg font-bold truncate">
             Rs. {item.basePrice}
           </span>
-          <ViewMenuItem menuItem={item} accentColor={accentColor} />
+          <PublicViewMenuItem menuItem={item} accentColor={accentColor} />
         </div>
       </div>
     </div>
