@@ -9,8 +9,7 @@ import {
 } from "react";
 
 export interface CartItem {
-  restaurantId: number;
-  menuItemId: number;
+  menuItemId: string;
   name: string;
   basePrice: number;
   imageURL: string;
@@ -23,12 +22,26 @@ export interface CartItem {
   }[];
 }
 
-interface CartContextType {
+export interface Cart {
+  restaurantId: string;
+  restaurantName: string;
+  restaurantAccentColor: string;
   items: CartItem[];
-  addItem: (item: CartItem) => void;
-  removeItem: (menuItemId: number, options?: CartItem["options"]) => void;
+}
+
+interface CartContextType {
+  cart: Cart;
+  addItem: (
+    item: CartItem,
+    restaurantInfo: {
+      restaurantId: string;
+      restaurantName: string;
+      restaurantAccentColor: string;
+    }
+  ) => void;
+  removeItem: (menuItemId: string, options?: CartItem["options"]) => void;
   updateQuantity: (
-    menuItemId: number,
+    menuItemId: string,
     quantity: number,
     options?: CartItem["options"]
   ) => void;
@@ -36,7 +49,16 @@ interface CartContextType {
   totalItems: number;
   totalPrice: number;
   getCartItemKey: (item: CartItem) => string;
+  currentRestaurantId: string;
 }
+
+// Default empty cart state
+const defaultCart: Cart = {
+  restaurantId: "",
+  restaurantName: "",
+  restaurantAccentColor: "",
+  items: [],
+};
 
 const CartContext = createContext<CartContextType | null>(null);
 
@@ -49,29 +71,126 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<Cart>(defaultCart);
 
   useEffect(() => {
-    // Load cart from localStorage on client side
+    // Load cart from localStorage
     const savedCart = localStorage.getItem("cart");
+
     if (savedCart) {
       try {
-        setItems(JSON.parse(savedCart));
+        const parsedCart = JSON.parse(savedCart);
+        setCart(parsedCart);
       } catch (error) {
         console.error("Failed to parse cart from localStorage", error);
       }
     }
   }, []);
 
-  // Save cart to localStorage whenever it changes
+  // Save cart to localStorage
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(items));
-  }, [items]);
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }, [cart]);
 
-  const addItem = (newItem: CartItem) => {
-    setItems((prevItems) => {
+  const addItem = (
+    newItem: CartItem,
+    restaurantInfo: {
+      restaurantId: string;
+      restaurantName: string;
+      restaurantAccentColor: string;
+    }
+  ) => {
+    console.log("Adding item:", {
+      newItemRestaurantId: restaurantInfo.restaurantId,
+      currentRestaurantId: cart.restaurantId,
+      itemsLength: cart.items.length,
+    });
+
+    // Check if this is the first item or from the same restaurant
+    if (cart.items.length === 0) {
+      console.log("First item, adding to empty cart");
+      setCart({
+        restaurantId: restaurantInfo.restaurantId,
+        restaurantName: restaurantInfo.restaurantName,
+        restaurantAccentColor: restaurantInfo.restaurantAccentColor,
+        items: [{ ...newItem, quantity: newItem.quantity || 1 }],
+      });
+      return;
+    }
+
+    // Convert both IDs to strings for comparison
+    const currentId = String(cart.restaurantId);
+    const newId = String(restaurantInfo.restaurantId);
+
+    console.log("Comparing restaurant IDs:", {
+      currentId,
+      newId,
+      areEqual: currentId === newId,
+    });
+
+    // Check if the item is from a different restaurant
+    if (currentId !== newId) {
+      console.log("Different restaurant detected, showing confirmation");
+
+      // Create and show custom confirmation dialog
+      const dialog = document.createElement("dialog");
+      dialog.className = "modal modal-bottom sm:modal-middle";
+
+      dialog.innerHTML = `
+        <div class="modal-box bg-base-200">
+          <h3 class="font-bold text-lg mb-4">Clear Cart?</h3>
+          <p class="py-4">Adding items from ${restaurantInfo.restaurantName} will clear your current cart. Do you want to continue?</p>
+          <div class="modal-action">
+            <form method="dialog" class="flex gap-2 w-full">
+              <button class="btn btn-secondary flex-1">Cancel</button>
+              <button class="btn flex-1" style="background-color: ${restaurantInfo.restaurantAccentColor}; color: white;">Clear & Add</button>
+            </form>
+          </div>
+        </div>
+        <form method="dialog" class="modal-backdrop backdrop-blur-xs">
+          <button>close</button>
+        </form>
+      `;
+
+      document.body.appendChild(dialog);
+      dialog.showModal();
+
+      // Handle the dialog result
+      dialog.addEventListener("close", () => {
+        const result = dialog.returnValue === "confirm";
+        if (result) {
+          console.log("User confirmed, clearing cart and adding new item");
+          setCart({
+            restaurantId: restaurantInfo.restaurantId,
+            restaurantName: restaurantInfo.restaurantName,
+            restaurantAccentColor: restaurantInfo.restaurantAccentColor,
+            items: [{ ...newItem, quantity: newItem.quantity || 1 }],
+          });
+        } else {
+          console.log("User cancelled, keeping current cart");
+        }
+        document.body.removeChild(dialog);
+      });
+
+      // Handle the confirm button click
+      const confirmButton = dialog.querySelector(
+        'button[style*="background-color"]'
+      );
+      if (confirmButton) {
+        confirmButton.addEventListener("click", () => {
+          dialog.returnValue = "confirm";
+          dialog.close();
+        });
+      }
+
+      return;
+    }
+
+    console.log("Same restaurant, proceeding with normal add logic");
+    // Item is from the same restaurant, proceed with normal add logic
+    setCart((prevCart) => {
       // Check if item already exists in cart with the same options
-      const existingItemIndex = prevItems.findIndex(
+      const existingItemIndex = prevCart.items.findIndex(
         (item) =>
           item.menuItemId === newItem.menuItemId &&
           areOptionsEqual(item.options, newItem.options)
@@ -79,16 +198,25 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
       if (existingItemIndex >= 0) {
         // If item exists with the same options, update quantity only
-        const updatedItems = [...prevItems];
+        const updatedItems = [...prevCart.items];
         updatedItems[existingItemIndex] = {
           ...updatedItems[existingItemIndex],
           quantity:
             updatedItems[existingItemIndex].quantity + (newItem.quantity || 1),
         };
-        return updatedItems;
+        return {
+          ...prevCart,
+          items: updatedItems,
+        };
       } else {
         // Otherwise add as a new item
-        return [...prevItems, { ...newItem, quantity: newItem.quantity || 1 }];
+        return {
+          ...prevCart,
+          items: [
+            ...prevCart.items,
+            { ...newItem, quantity: newItem.quantity || 1 },
+          ],
+        };
       }
     });
   };
@@ -134,26 +262,33 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return `${item.menuItemId}-${optionsKey}`;
   };
 
-  const removeItem = (menuItemId: number, options?: CartItem["options"]) => {
-    setItems((prevItems) => {
-      if (options) {
-        // Remove specific item with matching options
-        return prevItems.filter(
-          (item) =>
-            !(
-              item.menuItemId === menuItemId &&
-              areOptionsEqual(item.options, options)
-            )
-        );
-      } else {
-        // Remove all items with this menuItemId, regardless of options
-        return prevItems.filter((item) => item.menuItemId !== menuItemId);
+  const removeItem = (menuItemId: string, options?: CartItem["options"]) => {
+    setCart((prevCart) => {
+      const newItems = options
+        ? prevCart.items.filter(
+            (item) =>
+              !(
+                item.menuItemId === menuItemId &&
+                areOptionsEqual(item.options, options)
+              )
+          )
+        : prevCart.items.filter((item) => item.menuItemId !== menuItemId);
+
+      // If cart becomes empty, reset to default state
+      if (newItems.length === 0) {
+        return defaultCart;
       }
+
+      // Otherwise just update items
+      return {
+        ...prevCart,
+        items: newItems,
+      };
     });
   };
 
   const updateQuantity = (
-    menuItemId: number,
+    menuItemId: string,
     quantity: number,
     options?: CartItem["options"]
   ) => {
@@ -162,23 +297,24 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    setItems((prevItems) =>
-      prevItems.map((item) =>
+    setCart((prevCart) => ({
+      ...prevCart,
+      items: prevCart.items.map((item) =>
         item.menuItemId === menuItemId && areOptionsEqual(item.options, options)
           ? { ...item, quantity }
           : item
-      )
-    );
+      ),
+    }));
   };
 
   const clearCart = () => {
-    setItems([]);
+    setCart(defaultCart);
   };
 
   // Calculate total items and price
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
-  const totalPrice = items.reduce((sum, item) => {
+  const totalPrice = cart.items.reduce((sum, item) => {
     const optionsPrice =
       item.options?.reduce(
         (total, option) => total + option.additionalPrice,
@@ -190,7 +326,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   return (
     <CartContext.Provider
       value={{
-        items,
+        cart,
         addItem,
         removeItem,
         updateQuantity,
@@ -198,6 +334,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         totalItems,
         totalPrice,
         getCartItemKey,
+        currentRestaurantId: cart.restaurantId,
       }}
     >
       {children}

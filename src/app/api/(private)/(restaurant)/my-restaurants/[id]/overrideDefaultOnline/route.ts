@@ -95,7 +95,8 @@ export async function PATCH(request: NextRequest) {
 
     // Revalidate the cache for restaurants
     revalidateTag("verified-restaurants");
-    revalidateTag(`menu-items-${restaurantId}`);
+    revalidateTag(`restaurant-menu-${restaurantId}`);
+    revalidateTag(`restaurant-status-${restaurantId}`);
 
     return NextResponse.json({
       success: true,

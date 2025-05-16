@@ -4,15 +4,18 @@ import { MenuItem } from "@/models/MenuItem";
 import hexToRGBA from "@/lib/hexToRGBA";
 import Image from "next/image";
 import PublicViewMenuItem from "./PublicViewMenuItem";
+import { Restaurant } from "@/models/Restaurant";
 
 interface PublicMenuItemCardProps {
   item: MenuItem;
   accentColor: string;
+  restaurant: Restaurant;
 }
 
 export default function PublicMenuItemCard({
   item,
   accentColor,
+  restaurant,
 }: PublicMenuItemCardProps) {
   return (
     <div className="card card-border bg-base-200 border-base-300 card-sm overflow-hidden">
@@ -53,7 +56,11 @@ export default function PublicMenuItemCard({
           <span className="text-sm md:text-md lg:text-lg font-bold truncate">
             Rs. {item.basePrice}
           </span>
-          <PublicViewMenuItem menuItem={item} accentColor={accentColor} />
+          <PublicViewMenuItem
+            menuItem={item}
+            accentColor={accentColor}
+            restaurant={restaurant}
+          />
         </div>
       </div>
     </div>

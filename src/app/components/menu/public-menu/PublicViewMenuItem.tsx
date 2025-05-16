@@ -17,15 +17,18 @@ import { MenuItem, MenuOption } from "@/models/MenuItem";
 import hexToRGBA from "@/lib/hexToRGBA";
 import { useCart, CartItem } from "@/app/context/CartContext";
 import { toast } from "sonner";
+import { Restaurant } from "@/models/Restaurant";
 
 interface ViewMenuItemProps {
   menuItem: MenuItem;
   accentColor: string;
+  restaurant: Restaurant;
 }
 
 const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
   menuItem,
   accentColor,
+  restaurant,
 }) => {
   const { addItem } = useCart();
   const modalRef = useRef<HTMLDialogElement | null>(null);
@@ -199,6 +202,12 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
       return;
     }
 
+    // Ensure we have a valid restaurant ID
+    if (!menuItem.restaurant || !menuItem.restaurant) {
+      toast.error("Invalid restaurant information");
+      return;
+    }
+
     // Convert selected options to the format needed for CartItem
     const formattedOptions = Object.entries(selectedOptions).map(
       ([header, index]) => {
@@ -214,8 +223,7 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
     );
 
     const cartItem: CartItem = {
-      restaurantId: menuItem.restaurant._id as unknown as number,
-      menuItemId: menuItem._id as unknown as number,
+      menuItemId: menuItem._id.toString(), // Convert ObjectId to string
       name: menuItem.name,
       basePrice: menuItem.basePrice,
       imageURL: menuItem.imageURL,
@@ -224,7 +232,13 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
       options: formattedOptions.length > 0 ? formattedOptions : undefined,
     };
 
-    addItem(cartItem);
+    const restaurantInfo = {
+      restaurantId: restaurant._id.toString(), // Convert ObjectId to string
+      restaurantName: restaurant.name,
+      restaurantAccentColor: restaurant.accentColor || "",
+    };
+
+    addItem(cartItem, restaurantInfo);
     toast.success(`${menuItem.name} added to cart!`);
 
     // Close modal after adding to cart

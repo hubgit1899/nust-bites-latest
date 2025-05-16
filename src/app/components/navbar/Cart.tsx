@@ -7,12 +7,13 @@ import { useCart, CartItem } from "@/app/context/CartContext";
 
 function Cart() {
   const {
-    items,
+    cart,
     totalItems,
     totalPrice,
     removeItem,
     updateQuantity,
     getCartItemKey,
+    currentRestaurantId,
   } = useCart();
 
   // Calculate total price for an item including options
@@ -49,13 +50,20 @@ function Cart() {
         <div className="card-body">
           {totalItems > 0 ? (
             <>
-              <span className="text-lg font-bold">{totalItems} Items</span>
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-bold">{totalItems} Items</span>
+                {currentRestaurantId && (
+                  <span className="text-sm text-base-content/70">
+                    Restaurant ID: {currentRestaurantId}
+                  </span>
+                )}
+              </div>
               <span className="text-info">
                 Subtotal: Rs.{totalPrice.toFixed(2)}
               </span>
 
               <div className="max-h-60 overflow-y-auto">
-                {items.map((item) => (
+                {cart.items.map((item) => (
                   <div
                     key={getCartItemKey(item)}
                     className="flex items-start gap-2 py-2 border-b"

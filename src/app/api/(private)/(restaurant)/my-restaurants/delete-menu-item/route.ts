@@ -85,7 +85,8 @@ export async function DELETE(request: NextRequest) {
     await mongoSession.commitTransaction();
 
     // Revalidate the cache for the restaurant
-    revalidateTag(`menu-items-${menuItem.restaurant}`);
+    revalidateTag(`restaurant-menu-${menuItem.restaurant}`);
+    revalidateTag(`restaurant-status-${menuItem.restaurant}`);
 
     return NextResponse.json(
       { success: true, message: "Menu item deleted successfully." },

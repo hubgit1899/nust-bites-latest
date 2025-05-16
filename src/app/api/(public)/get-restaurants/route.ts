@@ -22,7 +22,7 @@ const getCachedVerifiedRestaurants = unstable_cache(
     return restaurants;
   },
   ["verified-restaurants"],
-  { revalidate: 60 * 10, tags: ["verified-restaurants"] } // TODO: Adjust revalidation time as needed
+  { revalidate: 60 * 5, tags: ["verified-restaurants"] } // TODO: Adjust revalidation time as needed
 );
 
 export async function GET() {

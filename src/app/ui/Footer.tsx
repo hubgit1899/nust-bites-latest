@@ -22,9 +22,9 @@ function Footer() {
             />
           </svg>
           <p className="font-bold">
-            NUST Bites Ltd.
+            nustbites Ltd.
             <br />
-            Providing reliable tech since 1992
+            Providing you with great food since 2024
           </p>
           <p>Copyright © {new Date().getFullYear()} - All right reserved</p>
         </aside>

@@ -10,18 +10,20 @@ import {
   PlusIcon,
   ArrowLeft,
   ShoppingBagIcon,
+  UtensilsCrossed,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function CartPage() {
   const {
-    items,
+    cart,
     removeItem,
     updateQuantity,
     totalItems,
     totalPrice,
     clearCart,
     getCartItemKey,
+    currentRestaurantId,
   } = useCart();
   const router = useRouter();
 
@@ -41,7 +43,7 @@ export default function CartPage() {
   };
 
   const handleCheckout = () => {
-    if (items.length === 0) {
+    if (cart.items.length === 0) {
       toast.error("Your cart is empty");
       return;
     }
@@ -51,7 +53,7 @@ export default function CartPage() {
     toast.success("Checkout functionality will be implemented soon!");
   };
 
-  if (items.length === 0) {
+  if (cart.items.length === 0) {
     return (
       <div className="py-20 text-center">
         <div className="flex justify-center mb-4">
@@ -82,7 +84,17 @@ export default function CartPage() {
         <div className="lg:col-span-2">
           <div className="bg-base-200 rounded-xl p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Items ({totalItems})</h2>
+              <div>
+                <h2 className="text-xl font-semibold">Items ({totalItems})</h2>
+                {currentRestaurantId && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <UtensilsCrossed size={16} />
+                    <span className="text-sm text-base-content/70">
+                      Restaurant ID: {currentRestaurantId}
+                    </span>
+                  </div>
+                )}
+              </div>
               <button
                 onClick={() => {
                   clearCart();
@@ -96,7 +108,7 @@ export default function CartPage() {
             </div>
 
             <div className="space-y-4">
-              {items.map((item) => (
+              {cart.items.map((item) => (
                 <div
                   key={getCartItemKey(item)}
                   className="border border-base-300 rounded-lg p-4 flex flex-col sm:flex-row gap-4"

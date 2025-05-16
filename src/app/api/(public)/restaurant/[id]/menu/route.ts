@@ -24,6 +24,7 @@ const getCachedRestaurantWithMenu = (restaurantId: string) =>
           name: 1,
           logoImageURL: 1,
           accentColor: 1,
+          restaurant: 1,
           onlineTime: 1,
           forceOnlineOverride: 1,
           isVerified: 1,
@@ -42,25 +43,34 @@ const getCachedRestaurantWithMenu = (restaurantId: string) =>
         .sort({ category: 1, name: 1 })
         .lean();
 
+      // Calculate online status for restaurant
+      // Convert to plain object to satisfy PlainRestaurant type
+      const plainRestaurant = JSON.parse(JSON.stringify(restaurant));
+      const restaurantWithStatus =
+        calculateRestaurantOnlineStatus(plainRestaurant);
+
+      console.log("DB Fetch:", restaurantWithStatus);
       // Combine them into the expected structure
       return {
-        ...restaurant,
+        ...restaurantWithStatus,
         menu: menuItems,
       };
     },
     [`restaurant-menu-${restaurantId}`],
-    { revalidate: 60 * 10, tags: [`restaurant-menu-${restaurantId}`] } // TODO: Adjust revalidation time as needed
+    {
+      revalidate: 60 * 5, // Reduce cache time to 1 minute
+      tags: [
+        `restaurant-menu-${restaurantId}`,
+        `restaurant-status-${restaurantId}`, // Add a new tag for restaurant status
+      ],
+    }
   )();
 
 export async function GET(request: NextRequest) {
   try {
-    await dbConnect();
-
     const url = new URL(request.url);
     const segments = url.pathname.split("/");
     const restaurantId = segments[segments.indexOf("menu") - 1];
-
-    console.log("Fetching menu for restaurant ID:", restaurantId);
 
     const restaurant = await getCachedRestaurantWithMenu(restaurantId);
 
@@ -72,7 +82,6 @@ export async function GET(request: NextRequest) {
     }
 
     let plainRestaurant = JSON.parse(JSON.stringify(restaurant));
-    plainRestaurant = calculateRestaurantOnlineStatus(plainRestaurant);
 
     // If restaurant is offline, return restaurant only (exclude menu)
     if (!plainRestaurant.online) {
@@ -99,7 +108,6 @@ export async function GET(request: NextRequest) {
         message: "Restaurant has no available menu items.",
       });
     }
-
     return NextResponse.json({
       success: true,
       restaurant: plainRestaurant,

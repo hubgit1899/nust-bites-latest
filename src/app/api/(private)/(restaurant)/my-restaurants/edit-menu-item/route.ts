@@ -130,7 +130,8 @@ export async function PUT(request: NextRequest) {
     await mongoSession.commitTransaction();
 
     // Revalidate the cache for the restaurant
-    revalidateTag(`menu-items-${existingMenuItem.restaurant}`);
+    revalidateTag(`restaurant-menu-${existingMenuItem.restaurant}`);
+    revalidateTag(`restaurant-status-${existingMenuItem.restaurant}`);
 
     return NextResponse.json(
       {

@@ -3,6 +3,7 @@ import type { Location } from "@/types/location";
 import { getCurrentMinutesInPakistan } from "@/helpers/localTime";
 
 export interface Restaurant extends Document {
+  _id: { toString(): string };
   name: string;
   logoImageURL: string;
   accentColor: string;

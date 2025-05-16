@@ -10,6 +10,7 @@ export interface MenuOption {
 }
 
 export interface MenuItem extends Document {
+  _id: { toString(): string };
   name: string;
   description: string;
   basePrice: number;

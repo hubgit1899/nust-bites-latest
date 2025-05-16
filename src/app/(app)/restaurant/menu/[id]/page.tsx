@@ -172,6 +172,7 @@ export default function RestaurantMenu() {
             key={String(item._id)}
             item={item}
             accentColor={restaurant?.accentColor!}
+            restaurant={restaurant!}
           />
         ))}
       </div>

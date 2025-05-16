@@ -4,6 +4,7 @@ import type { Location } from "@/types/location";
 import ItemSchema from "./ItemSchema";
 
 export interface Order extends Document {
+  _id: { toString(): string };
   orderId: number;
   customer: Types.ObjectId; // <- Changed to ObjectId
   rider: Types.ObjectId; // <- Changed to ObjectId
