@@ -27,6 +27,7 @@ import {
   SquarePen,
   Trash2,
 } from "lucide-react";
+import { ConfirmRestaurantUpdateModal } from "./ConfirmRestaurantUpdateModal";
 
 interface RestaurantSettingsModalProps {
   restaurant: Restaurant;
@@ -61,6 +62,10 @@ const RestaurantSettingsModal = ({
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [formData, setFormData] = useState<z.infer<
+    typeof updateRestaurantSchema
+  > | null>(null);
 
   // Initialize form with zodResolver and restaurant data
   const form = useForm<z.infer<typeof updateRestaurantSchema>>({
@@ -107,6 +112,8 @@ const RestaurantSettingsModal = ({
       onlineTime: {
         start: formValues.onlineTime?.start || 0,
         end: formValues.onlineTime?.end || 0,
+        startTimeString: formValues.onlineTime?.startTimeString,
+        endTimeString: formValues.onlineTime?.endTimeString,
       },
       logoImageURL: selectedFile ? "changed" : restaurant.logoImageURL,
     };
@@ -119,6 +126,20 @@ const RestaurantSettingsModal = ({
       onlineTime: {
         start: restaurant.onlineTime?.start || 0,
         end: restaurant.onlineTime?.end || 0,
+        startTimeString: restaurant.onlineTime?.start
+          ? `${Math.floor(restaurant.onlineTime.start / 60)
+              .toString()
+              .padStart(2, "0")}:${(restaurant.onlineTime.start % 60)
+              .toString()
+              .padStart(2, "0")}`
+          : "12:00",
+        endTimeString: restaurant.onlineTime?.end
+          ? `${Math.floor(restaurant.onlineTime.end / 60)
+              .toString()
+              .padStart(2, "0")}:${(restaurant.onlineTime.end % 60)
+              .toString()
+              .padStart(2, "0")}`
+          : "00:00",
       },
       logoImageURL: restaurant.logoImageURL,
     };
@@ -207,11 +228,79 @@ const RestaurantSettingsModal = ({
   };
 
   const onSubmit = async (data: z.infer<typeof updateRestaurantSchema>) => {
+    // Convert time strings to minutes for comparison
+    const startTimeMinutes = data.onlineTime?.startTimeString
+      ? (() => {
+          const [hours, minutes] = data.onlineTime.startTimeString
+            .split(":")
+            .map(Number);
+          return hours * 60 + minutes;
+        })()
+      : 0;
+
+    const endTimeMinutes = data.onlineTime?.endTimeString
+      ? (() => {
+          const [hours, minutes] = data.onlineTime.endTimeString
+            .split(":")
+            .map(Number);
+          return hours * 60 + minutes;
+        })()
+      : 0;
+
+    // Create a clean version of the current form data for comparison
+    const currentData = {
+      name: data.name,
+      accentColor: data.accentColor,
+      location: data.location,
+      onlineTime: {
+        start: startTimeMinutes,
+        end: endTimeMinutes,
+      },
+      logoImageURL: selectedFile ? "changed" : restaurant.logoImageURL,
+    };
+
+    // Create a clean version of the original restaurant for comparison
+    const originalData = {
+      name: restaurant.name,
+      accentColor: restaurant.accentColor,
+      location: restaurant.location,
+      onlineTime: {
+        start: restaurant.onlineTime?.start || 0,
+        end: restaurant.onlineTime?.end || 0,
+      },
+      logoImageURL: restaurant.logoImageURL,
+    };
+
+    // Compare the two objects
+    const hasActualChanges =
+      JSON.stringify(currentData) !== JSON.stringify(originalData);
+
+    if (!hasActualChanges) {
+      toast.info("No changes detected");
+      onClose();
+      return;
+    }
+
+    // Store form data and show confirmation modal
+    setFormData({
+      ...data,
+      onlineTime: {
+        ...data.onlineTime,
+        start: startTimeMinutes,
+        end: endTimeMinutes,
+      },
+    });
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmUpdate = async () => {
+    if (!formData) return;
+
     setIsSubmitting(true);
 
     try {
       // Create a deep copy of the data to avoid mutation issues
-      const submissionData = JSON.parse(JSON.stringify(data));
+      const submissionData = JSON.parse(JSON.stringify(formData));
       submissionData._id = restaurant._id; // Ensure we include the restaurant ID
 
       // Parse time strings to minutes
@@ -312,7 +401,13 @@ const RestaurantSettingsModal = ({
       });
     } finally {
       setIsSubmitting(false);
+      setShowConfirmModal(false);
     }
+  };
+
+  const handleCancelConfirm = () => {
+    setShowConfirmModal(false);
+    setFormData(null);
   };
 
   const handleDeleteRestaurant = async () => {
@@ -509,7 +604,11 @@ const RestaurantSettingsModal = ({
 
           {/* Edit Restaurant Tab */}
           {activeTab === "edit" && (
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form
+              id="editRestaurantForm"
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4"
+            >
               {/* Edit Tabs Navigation */}
               <div className="tabs tabs-boxed bg-base-200 px-2 py-1 flex flex-nowrap overflow-x-auto justify-center items-center gap-10 rounded-xl">
                 <button
@@ -957,6 +1056,7 @@ const RestaurantSettingsModal = ({
                     </button>
                     <button
                       type="submit"
+                      form="editRestaurantForm"
                       className={`btn ${hasChanges ? "" : "btn-disabled"}`}
                       disabled={isSubmitting || !hasChanges}
                       style={
@@ -1094,6 +1194,39 @@ const RestaurantSettingsModal = ({
             </button>
           </form>
         </dialog>
+      )}
+
+      {/* Update Confirmation Modal */}
+      {showConfirmModal && formData && (
+        <ConfirmRestaurantUpdateModal
+          originalItem={{
+            name: restaurant.name,
+            accentColor: restaurant.accentColor,
+            location: restaurant.location,
+            onlineTime: {
+              start: restaurant.onlineTime?.start || 0,
+              end: restaurant.onlineTime?.end || 0,
+            },
+            logoImageURL: restaurant.logoImageURL,
+          }}
+          updatedItem={{
+            name: formData.name || restaurant.name || "",
+            accentColor:
+              formData.accentColor || restaurant.accentColor || "#ff0000",
+            location: formData.location || restaurant.location,
+            onlineTime: {
+              start: formData.onlineTime?.start || 0,
+              end: formData.onlineTime?.end || 0,
+            },
+            logoImageURL:
+              selectedFile && previewUrl
+                ? previewUrl
+                : restaurant.logoImageURL || "",
+          }}
+          onConfirm={handleConfirmUpdate}
+          onCancel={handleCancelConfirm}
+          accentColor={restaurant.accentColor || "#ff0000"}
+        />
       )}
 
       <form method="dialog" className="modal-backdrop">
