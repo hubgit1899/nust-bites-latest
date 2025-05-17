@@ -300,76 +300,54 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
             {/* Footer - Fixed position */}
             <div className="p-4 border-t border-base-300 bg-base-200 sticky bottom-0 z-10">
               {/* Quantity and price */}
-              <div className="flex justify-between items-center mb-3">
-                <div className="flex items-center gap-2">
+              <div className="flex justify-between items-center mb-4 mr-2 ml-2">
+                {/* Quantity Controls */}
+                <div className="flex items-center gap-2 bg-base-100 rounded-full px-1 py-0.5">
+                  {/* Decrease Button */}
                   <button
-                    className="btn btn-sm btn-circle btn-outline border-none transition-colors"
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    style={{
-                      color: accentColor,
-                      borderColor: accentColor,
-                      backgroundColor: "transparent",
+                    className="p-1 rounded-full transition-colors"
+                    style={{ color: accentColor }}
+                    onClick={(e) => {
+                      e.currentTarget.style.backgroundColor = accentColor;
+                      e.currentTarget.style.color = "#fff";
+                      setQuantity(Math.max(1, quantity - 1));
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = hexToRGBA(
-                        accentColor,
-                        0.1
-                      );
+                      e.currentTarget.style.backgroundColor = accentColor;
+                      e.currentTarget.style.color = "#fff";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.color = accentColor;
                     }}
-                    onMouseDown={(e) => {
-                      e.currentTarget.style.backgroundColor = hexToRGBA(
-                        accentColor,
-                        0.2
-                      );
-                    }}
-                    onMouseUp={(e) => {
-                      e.currentTarget.style.backgroundColor = hexToRGBA(
-                        accentColor,
-                        0.1
-                      );
-                    }}
+                    aria-label="Decrease quantity"
                   >
-                    <Minus />
+                    <Minus size={16} />
                   </button>
 
-                  <span className="text-lg font-medium w-8 text-center">
-                    {quantity}
-                  </span>
+                  {/* Quantity Display */}
+                  <span className="font-medium">{quantity}</span>
 
+                  {/* Increase Button */}
                   <button
-                    className="btn btn-sm btn-circle btn-outline border-none transition-colors"
-                    onClick={() => setQuantity(quantity + 1)}
-                    style={{
-                      color: accentColor,
-                      borderColor: accentColor,
-                      backgroundColor: "transparent",
+                    className="p-1 rounded-full transition-colors"
+                    style={{ color: accentColor }}
+                    onClick={(e) => {
+                      e.currentTarget.style.backgroundColor = accentColor;
+                      e.currentTarget.style.color = "#fff";
+                      setQuantity(quantity + 1);
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = hexToRGBA(
-                        accentColor,
-                        0.1
-                      );
+                      e.currentTarget.style.backgroundColor = accentColor;
+                      e.currentTarget.style.color = "#fff";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.color = accentColor;
                     }}
-                    onMouseDown={(e) => {
-                      e.currentTarget.style.backgroundColor = hexToRGBA(
-                        accentColor,
-                        0.2
-                      );
-                    }}
-                    onMouseUp={(e) => {
-                      e.currentTarget.style.backgroundColor = hexToRGBA(
-                        accentColor,
-                        0.1
-                      );
-                    }}
+                    aria-label="Increase quantity"
                   >
-                    <Plus />
+                    <Plus size={16} />
                   </button>
                 </div>
 

@@ -12,6 +12,7 @@ import hexToRGBA from "@/lib/hexToRGBA";
 import axios from "axios";
 import { toast } from "sonner";
 import { formatTime } from "@/helpers/localTime";
+import { calculateStreetDistance, formatDistance } from "@/lib/distance";
 
 export default function RestaurantMenu() {
   const params = useParams();
@@ -32,6 +33,56 @@ export default function RestaurantMenu() {
   const [groupedItems, setGroupedItems] = useState<Record<string, MenuItem[]>>(
     {}
   );
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [distance, setDistance] = useState<string>("Calculating...");
+  const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
+
+  // Get user's location
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setDistance("Location not available");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ lat: latitude, lng: longitude });
+      },
+      (error) => {
+        console.error("Error getting location:", error);
+        setDistance("Location not available");
+      }
+    );
+  }, []);
+
+  // Calculate distance when both user location and restaurant location are available
+  useEffect(() => {
+    const calculateDistance = async () => {
+      if (!userLocation || !restaurant?.location) return;
+
+      setIsCalculatingDistance(true);
+      try {
+        const calculatedDistance = await calculateStreetDistance(
+          userLocation.lat,
+          userLocation.lng,
+          restaurant.location.lat,
+          restaurant.location.lng
+        );
+        setDistance(formatDistance(calculatedDistance));
+      } catch (error) {
+        console.error("Error calculating distance:", error);
+        setDistance("Distance unavailable");
+      } finally {
+        setIsCalculatingDistance(false);
+      }
+    };
+
+    calculateDistance();
+  }, [userLocation, restaurant]);
 
   useEffect(() => {
     if (!id) return;
@@ -249,7 +300,13 @@ export default function RestaurantMenu() {
                 <Navigation size={16} stroke={restaurant?.accentColor} />
                 <span className="text-sm">
                   <strong>Distance:</strong>{" "}
-                  <span className="text-base-content/70">TBD</span>
+                  <span className="text-base-content/70">
+                    {isCalculatingDistance ? (
+                      <span className="loading loading-spinner loading-xs"></span>
+                    ) : (
+                      distance
+                    )}
+                  </span>
                 </span>
               </div>
 

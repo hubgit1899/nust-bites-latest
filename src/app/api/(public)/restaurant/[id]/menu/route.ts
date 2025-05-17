@@ -28,6 +28,7 @@ const getCachedRestaurantWithMenu = (restaurantId: string) =>
           onlineTime: 1,
           forceOnlineOverride: 1,
           isVerified: 1,
+          location: 1,
         }
       ).lean();
 

@@ -444,7 +444,7 @@ export const EditMenuItemModal = ({
         className="modal modal-bottom sm:modal-middle backdrop-blur-xs"
         open
       >
-        <div className="modal-box max-w-4xl bg-base-100 p-0 overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[80vh]">
+        <div className="modal-box max-w-4xl bg-base-100 p-0 overflow-hidden flex flex-col max-h-[80vh] sm:max-h-[70vh]">
           {/* Modal Header */}
           <div className="bg-base-200 p-3 flex items-center justify-between shrink-0">
             <h2 className="text-xl font-bold">Edit Menu Item</h2>
