@@ -11,6 +11,9 @@ import {
   ShoppingCart,
   Plus,
   Minus,
+  LogIn,
+  UserCheck,
+  UserX,
 } from "lucide-react";
 import { formatTime } from "@/helpers/localTime";
 import { MenuItem, MenuOption } from "@/models/MenuItem";
@@ -18,6 +21,7 @@ import hexToRGBA from "@/lib/hexToRGBA";
 import { useCart, CartItem } from "@/app/context/CartContext";
 import { toast } from "sonner";
 import { Restaurant } from "@/models/Restaurant";
+import { useSession } from "next-auth/react";
 
 interface ViewMenuItemProps {
   menuItem: MenuItem;
@@ -31,6 +35,7 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
   restaurant,
 }) => {
   const { addItem } = useCart();
+  const { data: session } = useSession();
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<
@@ -195,6 +200,38 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
       .every((option) => selectedOptions[option.optionHeader] !== undefined);
   };
 
+  // Get button text and icon based on user status
+  const getButtonContent = () => {
+    if (!session?.user) {
+      return {
+        text: "Sign in to Order",
+        icon: <LogIn size={16} />,
+        disabled: true,
+      };
+    }
+    if (!session.user.isVerified) {
+      return {
+        text: "Verify Account",
+        icon: <UserCheck size={16} />,
+        disabled: true,
+      };
+    }
+    if (!session.user.isCustomer) {
+      return {
+        text: "Customers Only",
+        icon: <UserX size={16} />,
+        disabled: true,
+      };
+    }
+    return {
+      text: "Add to Cart",
+      icon: <ShoppingCart size={16} />,
+      disabled: !allRequiredOptionsSelected(),
+    };
+  };
+
+  const buttonContent = getButtonContent();
+
   // Add to cart handler
   const handleAddToCart = () => {
     if (!allRequiredOptionsSelected()) {
@@ -238,12 +275,13 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
       restaurantAccentColor: restaurant.accentColor || "",
     };
 
-    addItem(cartItem, restaurantInfo);
-    toast.success(`${menuItem.name} added to cart!`);
-
-    // Close modal after adding to cart
-    if (modalRef.current) {
-      modalRef.current.close();
+    const success = addItem(cartItem, restaurantInfo);
+    if (success) {
+      toast.success(`${menuItem.name} added to cart!`);
+      // Close modal after adding to cart
+      if (modalRef.current) {
+        modalRef.current.close();
+      }
     }
   };
 
@@ -444,17 +482,17 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
 
                 <button
                   className="btn flex-1 gap-2"
-                  disabled={!allRequiredOptionsSelected()}
+                  disabled={buttonContent.disabled}
                   style={{
-                    backgroundColor: allRequiredOptionsSelected()
+                    backgroundColor: !buttonContent.disabled
                       ? accentColor
                       : undefined,
-                    color: allRequiredOptionsSelected() ? "white" : undefined,
+                    color: !buttonContent.disabled ? "white" : undefined,
                   }}
                   onClick={handleAddToCart}
                 >
-                  <ShoppingCart size={16} />
-                  Add to Cart
+                  {buttonContent.icon}
+                  {buttonContent.text}
                 </button>
               </div>
             </div>

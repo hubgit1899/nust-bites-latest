@@ -7,6 +7,8 @@ import {
   useEffect,
   ReactNode,
 } from "react";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 
 export interface CartItem {
   menuItemId: string;
@@ -38,7 +40,7 @@ interface CartContextType {
       restaurantName: string;
       restaurantAccentColor: string;
     }
-  ) => void;
+  ) => boolean;
   removeItem: (menuItemId: string, options?: CartItem["options"]) => void;
   updateQuantity: (
     menuItemId: string,
@@ -72,6 +74,7 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<Cart>(defaultCart);
+  const { data: session } = useSession();
 
   useEffect(() => {
     // Load cart from localStorage
@@ -100,6 +103,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       restaurantAccentColor: string;
     }
   ) => {
+    // Check if user is authenticated, verified, and is a customer
+    if (!session?.user) {
+      toast.error("Please sign in to add items to cart");
+      return false;
+    }
+
+    if (!session.user.isVerified) {
+      toast.error("Please verify your account to add items to cart");
+      return false;
+    }
+
+    if (!session.user.isCustomer) {
+      toast.error("Only customers can add items to cart");
+      return false;
+    }
+
     console.log("Adding item:", {
       newItemRestaurantId: restaurantInfo.restaurantId,
       currentRestaurantId: cart.restaurantId,
@@ -115,7 +134,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         restaurantAccentColor: restaurantInfo.restaurantAccentColor,
         items: [{ ...newItem, quantity: newItem.quantity || 1 }],
       });
-      return;
+      return true;
     }
 
     // Convert both IDs to strings for comparison
@@ -183,7 +202,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         });
       }
 
-      return;
+      return false;
     }
 
     console.log("Same restaurant, proceeding with normal add logic");
@@ -219,6 +238,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         };
       }
     });
+    return true;
   };
 
   // Helper function to compare options equality

@@ -18,22 +18,26 @@ import CustomerDetailsModal from "../components/navbar/CustomerDetailsModal";
 const Navbar = () => {
   const navbarRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession(); // Added status to properly track authentication state
   const user = session?.user as User;
   const router = useRouter();
   const [, setNavbarHeight] = useState(0);
   const [showCustomerDetailsModal, setShowCustomerDetailsModal] =
     useState(false);
 
-  const roles = {
-    isCustomer: user?.isCustomer,
-    isRestaurantOwner: user?.isRestaurantOwner,
-    isRestaurantAdmin: user?.isRestaurantAdmin,
-    isRider: user?.isRider,
-    isRiderVerified: user?.isRiderVerified,
-    isRiderAdmin: user?.isRiderAdmin,
-    isSuperAdmin: user?.isSuperAdmin,
-  };
+  // Only define roles if user exists
+  const roles = user
+    ? {
+        isCustomer: user.isCustomer,
+        isRestaurantOwner: user.isRestaurantOwner,
+        isRestaurantAdmin: user.isRestaurantAdmin,
+        isRider: user.isRider,
+        isRiderVerified: user.isRiderVerified,
+        isRiderAdmin: user.isRiderAdmin,
+        isSuperAdmin: user.isSuperAdmin,
+      }
+    : null;
+
   const page = {
     isSignIn: pathname === "/sign-in",
     isSignUp: pathname === "/sign-up",
@@ -49,10 +53,9 @@ const Navbar = () => {
   };
 
   const { data: restaurants, error } = useSWR("/api/get-restaurants", fetcher, {
-    revalidateOnFocus: true, // TODO: HVAE TO DISCUSS
-    refreshInterval: 1000 * 60 * 10, // TODO: revalidate every 2 minutes
+    revalidateOnFocus: true,
+    refreshInterval: 1000 * 60 * 10,
   });
-  console.log("Restaurants: ", restaurants);
 
   useEffect(() => {
     if (error) {
@@ -87,22 +90,24 @@ const Navbar = () => {
 
   useEffect(() => {
     // Show modal if user is verified but not a customer
-    if (user && !roles.isCustomer) {
+    if (user && !roles?.isCustomer) {
       setShowCustomerDetailsModal(true);
     }
-  }, [user, roles.isCustomer]);
+  }, [user, roles?.isCustomer]);
+
+  // Render loading state while authentication status is being determined
+  const isLoading = status === "loading";
 
   return (
     <div className="mb-5">
       <div
         ref={navbarRef}
-        className="navbar fixed top-0 left-0 w-full z-50 mx-auto px-4 sm:px-6 bg-base-200/80 backdrop-blur-md shadow-sm "
+        className="navbar fixed top-0 left-0 w-full z-50 mx-auto px-4 sm:px-6 bg-base-200/80 backdrop-blur-md shadow-sm"
       >
         <div className="navbar-start">
           <div className="drawer">
             <input id="my-drawer" type="checkbox" className="drawer-toggle" />
             <div className="drawer-content">
-              {/* Page content here */}
               <label
                 htmlFor="my-drawer"
                 className="btn btn-ghost btn-circle drawer-button"
@@ -204,7 +209,13 @@ const Navbar = () => {
           <MainLogo />
         </div>
         <div className="navbar-end gap-2">
-          {user ? (
+          {isLoading ? (
+            // Show loading spinner while session status is being determined
+            <div className="h-10 w-10 flex items-center justify-center">
+              <span className="loading loading-spinner loading-sm"></span>
+            </div>
+          ) : status === "authenticated" && user ? (
+            // Only show user UI when explicitly authenticated
             <>
               <div className="dropdown dropdown-end">
                 <Cart />
@@ -212,7 +223,7 @@ const Navbar = () => {
               <div className="dropdown dropdown-end">
                 <>
                   <Avatar
-                    user={{ ...session!.user, id: session!.user._id || "" }}
+                    user={{ ...session.user, id: session.user._id || "" }}
                   />
                   <ul
                     tabIndex={0}
@@ -227,14 +238,14 @@ const Navbar = () => {
                     <li>
                       <a>Settings</a>
                     </li>
-                    {roles.isSuperAdmin && (
+                    {roles?.isSuperAdmin && (
                       <li>
                         <button onClick={() => router.push("/admin-dashboard")}>
                           Admin Dashboard
                         </button>
                       </li>
                     )}
-                    {roles.isRestaurantOwner && (
+                    {roles?.isRestaurantOwner && (
                       <li>
                         <button
                           onClick={() =>
@@ -269,6 +280,7 @@ const Navbar = () => {
               </div>
             </>
           ) : page.isSignIn ? (
+            // Not authenticated and on sign-in page
             <button
               className="btn btn-primary btn-outline"
               onClick={() => router.push("/sign-up")}
@@ -276,6 +288,7 @@ const Navbar = () => {
               Sign Up
             </button>
           ) : (
+            // Not authenticated and not on sign-in page
             <button
               className="btn btn-primary btn-outline"
               onClick={() => router.push("/sign-in")}

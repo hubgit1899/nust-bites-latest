@@ -187,19 +187,23 @@ export default function RestaurantMenu() {
         <>
           {/* Category Navigation Bar with integrated search and filter */}
           {categories.length > 0 && (
-            <PublicCategoryNavbar
-              categories={categories}
-              accentColor={restaurant?.accentColor}
-              onSelectCategory={handleCategorySelect}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              sortOption={sortOption}
-              setSortOption={setSortOption}
-            />
+            <div className="relative z-10">
+              {" "}
+              {/* Added a container with lower z-index than breadcrumbs */}
+              <PublicCategoryNavbar
+                categories={categories}
+                accentColor={restaurant?.accentColor}
+                onSelectCategory={handleCategorySelect}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                sortOption={sortOption}
+                setSortOption={setSortOption}
+              />
+            </div>
           )}
           {/* Restaurant Header */}
           <div
-            className="w-full h-20 flex justify-center items-center mt-4 p-1 rounded-md "
+            className="w-full h-20 flex justify-center items-center mt-4 p-1 rounded-md"
             style={{
               backgroundColor: restaurant?.accentColor,
               height: "5rem",
