@@ -15,6 +15,7 @@ import { SearchControl, OpenStreetMapProvider } from "leaflet-geosearch";
 import "leaflet-geosearch/dist/geosearch.css"; // Import the default CSS first
 import "./map-styles.css"; // Then our overrides
 import { toast } from "sonner";
+import { Locate } from "lucide-react";
 
 // Fix default marker icons
 delete (L.Icon.Default as any).prototype._getIconUrl;
@@ -90,30 +91,10 @@ export default function MapPopup({
     33.6844, 73.0479,
   ]);
   const [mapInstance, setMapInstance] = useState<any>(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        setMapCenter([lat, lng]);
-        setMarkerPosition([lat, lng]);
-        fetchCity(lat, lng, setLocation);
-        if (mapInstance) {
-          mapInstance.setView([lat, lng], 15);
-        }
-      },
-      (error) => {
-        console.error("Failed to fetch current location:", error);
-        toast.error("Location Error", {
-          description: error.message,
-        });
-      }
-    );
-  }, [mapInstance]); // depends on map being ready
-
-  const goToCurrentLocation = () => {
+  // Function to handle getting current location
+  const getCurrentLocation = () => {
     if (!navigator.geolocation) {
       toast.error("Location Error", {
         description: "Geolocation is not supported by your browser.",
@@ -121,40 +102,53 @@ export default function MapPopup({
       return;
     }
 
+    setIsLoadingLocation(true);
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
 
-        const [currLat, currLng] = markerPosition || [null, null];
-        const isSameLocation =
-          currLat !== null &&
-          currLng !== null &&
-          Math.abs(currLat - lat) < 0.0001 &&
-          Math.abs(currLng - lng) < 0.0001;
-
-        if (isSameLocation) {
-          return;
-        }
-
+        // Update map center and marker
+        setMapCenter([lat, lng]);
         setMarkerPosition([lat, lng]);
+
+        // Fetch city information
         fetchCity(lat, lng, setLocation);
 
+        // Update map view if instance exists
         if (mapInstance) {
-          mapInstance.flyTo([lat, lng], 15, {
+          mapInstance.setView([lat, lng], 15, {
             animate: true,
             duration: 1.5,
           });
         }
+
+        setIsLoadingLocation(false);
       },
       (error) => {
         console.error("Failed to get current location:", error);
         toast.error("Location Error", {
           description:
-            "Failed to get your location. Please allow location access.",
+            "Failed to get your location. Please allow location access and try again.",
         });
+        setIsLoadingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
       }
     );
+  };
+
+  // Initialize map with current location
+  useEffect(() => {
+    getCurrentLocation();
+  }, [mapInstance]);
+
+  const goToCurrentLocation = () => {
+    getCurrentLocation();
   };
 
   return (
@@ -162,13 +156,13 @@ export default function MapPopup({
       <MapContainer
         center={mapCenter}
         zoom={13}
-        style={{ height: "100%", width: "100%", zIndex: 0 }} // <- important
+        style={{ height: "100%", width: "100%", zIndex: 0 }}
         ref={(mapRef) => {
           if (mapRef) {
             setMapInstance(mapRef);
           }
         }}
-        className="z-0" // <- important
+        className="z-0"
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -184,19 +178,15 @@ export default function MapPopup({
       <button
         type="button"
         onClick={goToCurrentLocation}
-        className="absolute bottom-4 right-4 bg-white p-3 rounded-full shadow-md hover:bg-gray-100"
+        className="absolute bottom-4 right-4 bg-base-100 hover:bg-base-200 p-2.5 rounded-full shadow-lg border border-base-300 transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         aria-label="Go to my location"
+        disabled={isLoadingLocation}
       >
-        {/* Google style center location icon */}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 905.505 905.504"
-          className="h-6 w-6 text-primary"
-          fill="currentColor"
-        >
-          <circle cx="452.752" cy="451.994" r="61.001" />
-          <path d="M432.752 905.504h40c16.568 0 30-13.432 30-30V824.33c32.977-4.387 65.089-13.137 95.934-26.182 44.646-18.886 84.732-45.908 119.146-80.318 34.411-34.412 61.435-74.498 80.317-119.146 13.046-30.844 21.797-62.957 26.183-95.934h51.174c16.568 0 30-13.432 30-30v-40c0-16.568-13.432-30-30-30H824.33c-4.386-32.976-13.137-65.089-26.183-95.934-18.885-44.646-45.906-84.731-80.317-119.143-34.412-34.412-74.497-61.435-119.146-80.318-30.845-13.046-62.958-21.797-95.934-26.183V30c0-16.569-13.432-30-30-30h-40c-16.568 0-30 13.431-30 30v51.173c-32.976 4.386-65.089 13.137-95.934 26.183-44.645 18.884-84.73 45.906-119.142 80.318-34.412 34.412-61.435 74.497-80.318 119.143-13.046 30.844-21.797 62.958-26.183 95.934H30c-16.568 0-30 13.432-30 30v40c0 16.57 13.432 30 30 30h51.173c4.386 32.977 13.137 65.09 26.183 95.936 18.884 44.646 45.906 84.73 80.318 119.144 34.412 34.413 74.497 61.436 119.144 80.318 30.845 13.045 62.958 21.797 95.934 26.182v51.174c0 16.568 13.432 29.999 30 29.999zM258.386 647.118c-39.929-39.928-66.042-89.98-75.981-144.365h43.348c16.568 0 30-13.432 30-30v-40c0-16.568-13.432-30-30-30h-43.349c9.94-54.384 36.053-104.438 75.981-144.366 39.928-39.929 89.981-66.042 144.366-75.98v43.349c0 16.569 13.432 30 30 30h40c16.568 0 30-13.431 30-30v-43.349c54.385 9.94 104.438 36.053 144.366 75.98 39.928 39.928 66.041 89.982 75.979 144.366H679.75c-16.568 0-30 13.432-30 30v40c0 16.568 13.432 30 30 30h43.348c-9.938 54.385-36.052 104.438-75.979 144.365s-89.981 66.041-144.366 75.981v-43.35c0-16.568-13.432-30-30-30h-40c-16.568 0-30 13.432-30 30v43.35c-54.386-9.94-104.44-36.052-144.367-75.981z" />
-        </svg>
+        {isLoadingLocation ? (
+          <div className="loading loading-spinner loading-sm text-primary"></div>
+        ) : (
+          <Locate />
+        )}
       </button>
     </div>
   );
