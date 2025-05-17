@@ -33,6 +33,7 @@ function DeliveryLocationSection() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [baseDeliveryFee, setBaseDeliveryFee] = useState<number>(0);
   const [isLocationSelected, setIsLocationSelected] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   // Get base delivery fee from admin settings
   useEffect(() => {
@@ -51,40 +52,70 @@ function DeliveryLocationSection() {
   // Get current location if mode is 'current'
   useEffect(() => {
     if (mode === "current") {
+      setLoadingFee(true);
+      setLocationError(null);
+
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-          (pos) => {
+          async (pos) => {
             const newLocation = {
               lat: pos.coords.latitude,
               lng: pos.coords.longitude,
             };
             setLocation(newLocation);
             setIsLocationSelected(true);
-            // Calculate fee only when location is first set
-            calculateDeliveryFee(newLocation).then((fee) => {
+
+            try {
+              const fee = await calculateDeliveryFee(newLocation);
               setDeliveryFee(fee);
               setGlobalDeliveryFee(fee);
-            });
+            } catch (error) {
+              console.error("Error calculating delivery fee:", error);
+              setLocationError("Failed to calculate delivery fee");
+            } finally {
+              setLoadingFee(false);
+            }
           },
-          () => {
+          (error) => {
+            console.error("Geolocation error:", error);
             setLocation(null);
             setIsLocationSelected(false);
             setDeliveryFee(null);
             setGlobalDeliveryFee(0);
+            setLocationError(
+              "Failed to get your location. Please try again or select a location on the map."
+            );
+            setLoadingFee(false);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
           }
         );
+      } else {
+        setLocationError("Geolocation is not supported by your browser");
+        setLoadingFee(false);
       }
     }
   }, [mode, calculateDeliveryFee, setGlobalDeliveryFee]);
 
-  const handleLocationSelect = (loc: { lat: number; lng: number }) => {
+  const handleLocationSelect = async (loc: { lat: number; lng: number }) => {
+    setLoadingFee(true);
+    setLocationError(null);
     setLocation(loc);
     setIsLocationSelected(true);
-    // Calculate fee only when location is selected
-    calculateDeliveryFee(loc).then((fee) => {
+
+    try {
+      const fee = await calculateDeliveryFee(loc);
       setDeliveryFee(fee);
       setGlobalDeliveryFee(fee);
-    });
+    } catch (error) {
+      console.error("Error calculating delivery fee:", error);
+      setLocationError("Failed to calculate delivery fee");
+    } finally {
+      setLoadingFee(false);
+    }
   };
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -169,8 +200,15 @@ function DeliveryLocationSection() {
                 d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
               />
             </svg>
-            {location ? "Location detected" : "Getting your location..."}
+            {loadingFee
+              ? "Calculating delivery fee..."
+              : location
+                ? "Location detected"
+                : "Getting your location..."}
           </div>
+          {locationError && (
+            <div className="text-error text-sm">{locationError}</div>
+          )}
           <input
             className="input input-bordered w-full"
             placeholder="Enter your address"
@@ -183,6 +221,9 @@ function DeliveryLocationSection() {
       {mode === "map" && (
         <div className="space-y-3">
           <MapPopup setLocation={handleLocationSelect} />
+          {locationError && (
+            <div className="text-error text-sm">{locationError}</div>
+          )}
           <input
             className="input input-bordered w-full"
             placeholder="Enter your address"
@@ -196,7 +237,10 @@ function DeliveryLocationSection() {
         <span className="font-medium">Delivery Fee:</span>
         <span className="font-semibold">
           {loadingFee ? (
-            <span className="loading loading-spinner loading-sm"></span>
+            <div className="flex items-center gap-2">
+              <span className="loading loading-spinner loading-sm"></span>
+              <span>Calculating...</span>
+            </div>
           ) : deliveryFee !== null ? (
             `Rs. ${deliveryFee}`
           ) : (
