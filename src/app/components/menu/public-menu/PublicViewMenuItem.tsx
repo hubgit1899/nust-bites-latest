@@ -260,7 +260,7 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
     );
 
     const cartItem: CartItem = {
-      menuItemId: menuItem._id.toString(), // Convert ObjectId to string
+      menuItemId: menuItem._id.toString(),
       name: menuItem.name,
       basePrice: menuItem.basePrice,
       imageURL: menuItem.imageURL,
@@ -269,16 +269,18 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
       options: formattedOptions.length > 0 ? formattedOptions : undefined,
     };
 
-    const restaurantInfo = {
-      restaurantId: restaurant._id.toString(), // Convert ObjectId to string
+    const success = await addItem(cartItem, {
+      restaurantId: restaurant._id.toString(),
       restaurantName: restaurant.name,
-      restaurantAccentColor: restaurant.accentColor || "",
-    };
+      restaurantAccentColor: restaurant.accentColor,
+      restaurantLocation: {
+        lat: restaurant.location.lat,
+        lng: restaurant.location.lng,
+      },
+    });
 
-    const success = await addItem(cartItem, restaurantInfo);
     if (success) {
-      toast.success(`${menuItem.name} added to cart!`);
-      // Close modal after adding to cart
+      toast.success("Added to cart");
       if (modalRef.current) {
         modalRef.current.close();
       }
@@ -320,20 +322,6 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
                   height={150}
                   className="w-full aspect-[16/9] object-contain bg-base-300 rounded-lg"
                 />
-
-                {/* Online/Offline badge */}
-                <div
-                  className="absolute top-2 right-2 tooltip tooltip-left"
-                  data-tip={menuItem.online ? "Online" : "Offline"}
-                >
-                  <div className="bg-base-100 rounded-full p-1 shadow-md">
-                    {menuItem.online ? (
-                      <Wifi size={16} className="text-success" />
-                    ) : (
-                      <WifiOff size={16} className="text-error" />
-                    )}
-                  </div>
-                </div>
 
                 {/* Category badge */}
                 <div

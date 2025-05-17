@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
+import { calculateStreetDistance } from "@/lib/distance";
 
 export interface CartItem {
   menuItemId: string;
@@ -28,6 +29,10 @@ export interface Cart {
   restaurantId: string;
   restaurantName: string;
   restaurantAccentColor: string;
+  restaurantLocation: {
+    lat: number;
+    lng: number;
+  };
   items: CartItem[];
 }
 
@@ -39,6 +44,10 @@ interface CartContextType {
       restaurantId: string;
       restaurantName: string;
       restaurantAccentColor: string;
+      restaurantLocation: {
+        lat: number;
+        lng: number;
+      };
     }
   ) => Promise<boolean>;
   removeItem: (menuItemId: string, options?: CartItem["options"]) => void;
@@ -52,6 +61,15 @@ interface CartContextType {
   totalPrice: number;
   getCartItemKey: (item: CartItem) => string;
   currentRestaurantId: string;
+  calculateDeliveryFee: (userLocation: {
+    lat: number;
+    lng: number;
+  }) => Promise<number>;
+  deliveryFee: number | null;
+  setDeliveryFee: (fee: number) => void;
+  calculateItemTotal: (item: CartItem) => number;
+  deliveryAddress: string;
+  setDeliveryAddress: (address: string) => void;
 }
 
 // Default empty cart state
@@ -59,6 +77,10 @@ const defaultCart: Cart = {
   restaurantId: "",
   restaurantName: "",
   restaurantAccentColor: "",
+  restaurantLocation: {
+    lat: 0,
+    lng: 0,
+  },
   items: [],
 };
 
@@ -74,6 +96,8 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<Cart>(defaultCart);
+  const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
+  const [deliveryAddress, setDeliveryAddress] = useState("");
   const { data: session } = useSession();
 
   useEffect(() => {
@@ -101,6 +125,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       restaurantId: string;
       restaurantName: string;
       restaurantAccentColor: string;
+      restaurantLocation: {
+        lat: number;
+        lng: number;
+      };
     }
   ): Promise<boolean> => {
     // Check if user is authenticated, verified, and is a customer
@@ -132,6 +160,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         restaurantId: restaurantInfo.restaurantId,
         restaurantName: restaurantInfo.restaurantName,
         restaurantAccentColor: restaurantInfo.restaurantAccentColor,
+        restaurantLocation: restaurantInfo.restaurantLocation,
         items: [{ ...newItem, quantity: newItem.quantity || 1 }],
       });
       return Promise.resolve(true);
@@ -184,6 +213,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
               restaurantId: restaurantInfo.restaurantId,
               restaurantName: restaurantInfo.restaurantName,
               restaurantAccentColor: restaurantInfo.restaurantAccentColor,
+              restaurantLocation: restaurantInfo.restaurantLocation,
               items: [{ ...newItem, quantity: newItem.quantity || 1 }],
             });
             resolve(true);
@@ -345,6 +375,49 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return sum + (item.basePrice + optionsPrice) * item.quantity;
   }, 0);
 
+  // Calculate total price for an item including options
+  const calculateItemTotal = (item: CartItem): number => {
+    let itemPrice = item.basePrice;
+
+    // Add options prices
+    if (item.options && item.options.length > 0) {
+      itemPrice += item.options.reduce(
+        (sum: number, option) => sum + option.additionalPrice,
+        0
+      );
+    }
+
+    return itemPrice * item.quantity;
+  };
+
+  // Add new function to calculate delivery fee
+  const calculateDeliveryFee = async (userLocation: {
+    lat: number;
+    lng: number;
+  }): Promise<number> => {
+    try {
+      // Get admin settings
+      const response = await fetch("/api/get-admin-settings");
+      const settings = await response.json();
+
+      // Calculate distance
+      const distance = await calculateStreetDistance(
+        userLocation.lat,
+        userLocation.lng,
+        cart.restaurantLocation.lat,
+        cart.restaurantLocation.lng
+      );
+
+      // Calculate delivery fee
+      const deliveryFee =
+        settings.baseDeliveryFee + distance * settings.deliveryFeePerKm;
+      return Math.round(deliveryFee);
+    } catch (error) {
+      console.error("Error calculating delivery fee:", error);
+      return 0;
+    }
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -357,6 +430,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         totalPrice,
         getCartItemKey,
         currentRestaurantId: cart.restaurantId,
+        calculateDeliveryFee,
+        deliveryFee,
+        setDeliveryFee,
+        calculateItemTotal,
+        deliveryAddress,
+        setDeliveryAddress,
       }}
     >
       {children}

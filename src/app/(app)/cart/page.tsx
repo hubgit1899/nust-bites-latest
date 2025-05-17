@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useCart, CartItem } from "@/app/context/CartContext";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -8,13 +8,205 @@ import {
   Trash2Icon,
   MinusIcon,
   PlusIcon,
-  ArrowLeft,
   ShoppingCart,
-  UtensilsCrossed,
-  ChevronDown,
   ScanBarcode,
+  MapPin,
+  MapPlus,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import MapPopup from "@/app/components/MapPopup/MapPopup";
+
+// New DeliveryLocationSection component
+function DeliveryLocationSection() {
+  const {
+    calculateDeliveryFee,
+    setDeliveryFee: setGlobalDeliveryFee,
+    deliveryAddress,
+    setDeliveryAddress,
+  } = useCart();
+  const [mode, setMode] = useState<"current" | "map">("current");
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
+    null
+  );
+  const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
+  const [loadingFee, setLoadingFee] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [baseDeliveryFee, setBaseDeliveryFee] = useState<number>(0);
+  const [isLocationSelected, setIsLocationSelected] = useState(false);
+
+  // Get base delivery fee from admin settings
+  useEffect(() => {
+    const fetchBaseDeliveryFee = async () => {
+      try {
+        const response = await fetch("/api/get-admin-settings");
+        const settings = await response.json();
+        setBaseDeliveryFee(settings.baseDeliveryFee);
+      } catch (error) {
+        console.error("Error fetching base delivery fee:", error);
+      }
+    };
+    fetchBaseDeliveryFee();
+  }, []);
+
+  // Get current location if mode is 'current'
+  useEffect(() => {
+    if (mode === "current") {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const newLocation = {
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+            };
+            setLocation(newLocation);
+            setIsLocationSelected(true);
+            // Calculate fee only when location is first set
+            calculateDeliveryFee(newLocation).then((fee) => {
+              setDeliveryFee(fee);
+              setGlobalDeliveryFee(fee);
+            });
+          },
+          () => {
+            setLocation(null);
+            setIsLocationSelected(false);
+            setDeliveryFee(null);
+            setGlobalDeliveryFee(0);
+          }
+        );
+      }
+    }
+  }, [mode, calculateDeliveryFee, setGlobalDeliveryFee]);
+
+  const handleLocationSelect = (loc: { lat: number; lng: number }) => {
+    setLocation(loc);
+    setIsLocationSelected(true);
+    // Calculate fee only when location is selected
+    calculateDeliveryFee(loc).then((fee) => {
+      setDeliveryFee(fee);
+      setGlobalDeliveryFee(fee);
+    });
+  };
+
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDeliveryAddress(e.target.value);
+  };
+
+  return (
+    <div className="delivery-location-section bg-base-200/30 rounded-xl p-4 mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-bold text-md">Delivery Location</h2>
+        <div className="relative">
+          <button
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="btn btn-sm btn-ghost gap-2"
+          >
+            {mode === "current" ? "Current Location" : "Choose Location"}
+            <svg
+              className={`w-4 h-4 transition-transform ${
+                isDropdownOpen ? "rotate-180" : ""
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          {isDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-56 bg-base-100 rounded-lg shadow-lg border border-base-300 z-10">
+              <div className="py-1">
+                <button
+                  onClick={() => {
+                    setMode("current");
+                    setIsDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-base-200 flex items-center gap-2 text-sm"
+                >
+                  <MapPin size={18} />
+                  Use Current Location
+                </button>
+                <button
+                  onClick={() => {
+                    setMode("map");
+                    setIsDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-base-200 flex items-center gap-2 text-sm"
+                >
+                  <MapPlus size={18} />
+                  Choose on Map
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {mode === "current" && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm text-base-content/70">
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+            </svg>
+            {location ? "Location detected" : "Getting your location..."}
+          </div>
+          <input
+            className="input input-bordered w-full"
+            placeholder="Enter your address"
+            value={deliveryAddress}
+            onChange={handleAddressChange}
+          />
+        </div>
+      )}
+
+      {mode === "map" && (
+        <div className="space-y-3">
+          <MapPopup setLocation={handleLocationSelect} />
+          <input
+            className="input input-bordered w-full"
+            placeholder="Enter your address"
+            value={deliveryAddress}
+            onChange={handleAddressChange}
+          />
+        </div>
+      )}
+
+      <div className="mt-4 flex items-center justify-between">
+        <span className="font-medium">Delivery Fee:</span>
+        <span className="font-semibold">
+          {loadingFee ? (
+            <span className="loading loading-spinner loading-sm"></span>
+          ) : deliveryFee !== null ? (
+            `Rs. ${deliveryFee}`
+          ) : (
+            "Select a location"
+          )}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export default function CartPage() {
   const {
@@ -26,25 +218,25 @@ export default function CartPage() {
     clearCart,
     getCartItemKey,
     currentRestaurantId,
+    calculateDeliveryFee,
+    deliveryFee,
+    calculateItemTotal,
+    deliveryAddress,
   } = useCart();
   const router = useRouter();
 
-  // Calculate total price for an item including options
-  const calculateItemTotal = (item: CartItem): number => {
-    let itemPrice = item.basePrice;
-
-    // Add options prices
-    if (item.options && item.options.length > 0) {
-      itemPrice += item.options.reduce(
-        (sum: number, option) => sum + option.additionalPrice,
-        0
-      );
-    }
-
-    return itemPrice * item.quantity;
-  };
+  // Check if checkout is valid
+  const isCheckoutValid =
+    deliveryAddress.trim().length > 0 &&
+    deliveryFee !== null &&
+    deliveryFee >= 0;
 
   const handleCheckout = () => {
+    if (!isCheckoutValid) {
+      toast.error("Please enter a valid delivery address");
+      return;
+    }
+
     if (cart.items.length === 0) {
       toast.error("Your cart is empty");
       return;
@@ -228,10 +420,7 @@ export default function CartPage() {
                           </button>
                         </div>
 
-                        <div
-                          className="font-medium text-sm"
-                          style={{ color: cart.restaurantAccentColor }}
-                        >
+                        <div className="font-medium text-sm">
                           Rs.{calculateItemTotal(item).toFixed(2)}
                         </div>
                       </div>
@@ -330,10 +519,7 @@ export default function CartPage() {
                         </button>
                       </div>
 
-                      <div
-                        className="font-medium text-base w-24 text-right"
-                        style={{ color: cart.restaurantAccentColor }}
-                      >
+                      <div className="font-medium text-base w-24 text-right">
                         Rs.{calculateItemTotal(item).toFixed(2)}
                       </div>
 
@@ -354,59 +540,74 @@ export default function CartPage() {
           </div>
         </div>
 
-        {/* Summary Section */}
+        {/* Summary Section - Now Sticky */}
         <div className="lg:col-span-1">
-          <div className="bg-base-200/30 rounded-2xl shadow-sm p-5 md:p-6 sticky top-20">
-            <h2 className="text-lg font-semibold mb-5">Order Summary</h2>
+          <div className="lg:sticky lg:top-[var(--navbar-height)] lg:max-h-[calc(100vh-var(--navbar-height))] lg:overflow-y-auto">
+            {/* Delivery Location Section */}
+            <DeliveryLocationSection />
 
-            <div className="space-y-4 py-2">
-              <div className="flex justify-between">
-                <span className="text-base-content/70">Subtotal</span>
-                <span>Rs.{totalPrice.toFixed(2)}</span>
+            {/* Order Summary Section */}
+            <div className="bg-base-200/30 rounded-2xl shadow-sm p-5 md:p-6">
+              <h2 className="text-lg font-semibold mb-5">Order Summary</h2>
+
+              <div className="space-y-4 py-2">
+                <div className="flex justify-between">
+                  <span className="text-base-content/70">Subtotal</span>
+                  <span>Rs.{totalPrice.toFixed(2)}</span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-base-content/70">Delivery Fee</span>
+                  <span>
+                    {deliveryFee !== null
+                      ? `Rs.${deliveryFee}`
+                      : "Select location"}
+                  </span>
+                </div>
               </div>
 
-              <div className="flex justify-between">
-                <span className="text-base-content/70">Delivery Fee</span>
-                <span>Rs.150.00</span>
+              <div className="h-px bg-base-300 my-4"></div>
+
+              <div className="flex justify-between font-bold text-lg my-4">
+                <span>Total</span>
+                <span style={{ color: cart.restaurantAccentColor }}>
+                  Rs.{(totalPrice + (deliveryFee || 0)).toFixed(2)}
+                </span>
               </div>
 
-              <div className="flex justify-between">
-                <span className="text-base-content/70">Tax (5%)</span>
-                <span>Rs.{(totalPrice * 0.05).toFixed(2)}</span>
-              </div>
+              <button
+                onClick={handleCheckout}
+                disabled={!isCheckoutValid}
+                className={`btn btn-md w-full mb-3 shadow-sm ${
+                  !isCheckoutValid ? "btn-disabled" : ""
+                }`}
+                style={{
+                  backgroundColor: isCheckoutValid
+                    ? cart.restaurantAccentColor
+                    : "",
+                  color: "white",
+                  borderColor: isCheckoutValid
+                    ? cart.restaurantAccentColor
+                    : "",
+                }}
+              >
+                <ScanBarcode size={20} />
+                {!isCheckoutValid
+                  ? "Enter Delivery Address"
+                  : "Proceed to Checkout"}
+              </button>
+
+              <Link
+                href="/"
+                className="btn btn-md w-full mb-3"
+                style={{
+                  borderColor: cart.restaurantAccentColor,
+                  color: cart.restaurantAccentColor,
+                }}
+              >
+                Continue Shopping
+              </Link>
             </div>
-
-            <div className="h-px bg-base-300 my-4"></div>
-
-            <div className="flex justify-between font-bold text-lg my-4">
-              <span>Total</span>
-              <span style={{ color: cart.restaurantAccentColor }}>
-                Rs.{(totalPrice + 150 + totalPrice * 0.05).toFixed(2)}
-              </span>
-            </div>
-
-            <button
-              onClick={handleCheckout}
-              className="btn btn-lg w-full mb-3 shadow-sm"
-              style={{
-                backgroundColor: cart.restaurantAccentColor,
-                color: "white",
-                borderColor: cart.restaurantAccentColor,
-              }}
-            >
-              Proceed to Checkout
-            </button>
-
-            <Link
-              href="/"
-              className="btn btn-lg w-full mb-3"
-              style={{
-                borderColor: cart.restaurantAccentColor,
-                color: cart.restaurantAccentColor,
-              }}
-            >
-              Continue Shopping
-            </Link>
           </div>
         </div>
       </div>
@@ -420,20 +621,23 @@ export default function CartPage() {
               className="font-bold"
               style={{ color: cart.restaurantAccentColor }}
             >
-              Rs.{(totalPrice + 150 + totalPrice * 0.05).toFixed(2)}
+              Rs.{(totalPrice + (deliveryFee || 0)).toFixed(2)}
             </div>
           </div>
           <button
             onClick={handleCheckout}
-            className="btn px-8"
+            disabled={!isCheckoutValid}
+            className={`btn px-8 ${!isCheckoutValid ? "btn-disabled" : ""}`}
             style={{
-              backgroundColor: cart.restaurantAccentColor,
+              backgroundColor: isCheckoutValid
+                ? cart.restaurantAccentColor
+                : "",
               color: "white",
-              borderColor: cart.restaurantAccentColor,
+              borderColor: isCheckoutValid ? cart.restaurantAccentColor : "",
             }}
           >
             <ScanBarcode size={20} />
-            Checkout
+            {!isCheckoutValid ? "Enter Address" : "Checkout"}
           </button>
         </div>
       </div>
