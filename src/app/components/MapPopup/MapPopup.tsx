@@ -178,7 +178,7 @@ export default function MapPopup({
       <button
         type="button"
         onClick={goToCurrentLocation}
-        className="absolute bottom-4 right-4 bg-base-100 hover:bg-base-200 p-2.5 rounded-full shadow-lg border border-base-300 transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+        className="absolute bottom-4 right-4 bg-base-100 hover:bg-base-200 p-2.5 btn-circle shadow-lg border border-base-300 transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         aria-label="Go to my location"
         disabled={isLoadingLocation}
       >
