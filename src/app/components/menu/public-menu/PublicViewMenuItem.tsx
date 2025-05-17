@@ -233,7 +233,7 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
   const buttonContent = getButtonContent();
 
   // Add to cart handler
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!allRequiredOptionsSelected()) {
       toast.error("Please select all required options");
       return;
@@ -275,7 +275,7 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
       restaurantAccentColor: restaurant.accentColor || "",
     };
 
-    const success = addItem(cartItem, restaurantInfo);
+    const success = await addItem(cartItem, restaurantInfo);
     if (success) {
       toast.success(`${menuItem.name} added to cart!`);
       // Close modal after adding to cart

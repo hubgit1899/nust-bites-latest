@@ -40,7 +40,7 @@ interface CartContextType {
       restaurantName: string;
       restaurantAccentColor: string;
     }
-  ) => boolean;
+  ) => Promise<boolean>;
   removeItem: (menuItemId: string, options?: CartItem["options"]) => void;
   updateQuantity: (
     menuItemId: string,
@@ -102,21 +102,21 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       restaurantName: string;
       restaurantAccentColor: string;
     }
-  ) => {
+  ): Promise<boolean> => {
     // Check if user is authenticated, verified, and is a customer
     if (!session?.user) {
       toast.error("Please sign in to add items to cart");
-      return false;
+      return Promise.resolve(false);
     }
 
     if (!session.user.isVerified) {
       toast.error("Please verify your account to add items to cart");
-      return false;
+      return Promise.resolve(false);
     }
 
     if (!session.user.isCustomer) {
       toast.error("Only customers can add items to cart");
-      return false;
+      return Promise.resolve(false);
     }
 
     console.log("Adding item:", {
@@ -134,7 +134,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         restaurantAccentColor: restaurantInfo.restaurantAccentColor,
         items: [{ ...newItem, quantity: newItem.quantity || 1 }],
       });
-      return true;
+      return Promise.resolve(true);
     }
 
     // Convert both IDs to strings for comparison
@@ -174,35 +174,37 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       document.body.appendChild(dialog);
       dialog.showModal();
 
-      // Handle the dialog result
-      dialog.addEventListener("close", () => {
-        const result = dialog.returnValue === "confirm";
-        if (result) {
-          console.log("User confirmed, clearing cart and adding new item");
-          setCart({
-            restaurantId: restaurantInfo.restaurantId,
-            restaurantName: restaurantInfo.restaurantName,
-            restaurantAccentColor: restaurantInfo.restaurantAccentColor,
-            items: [{ ...newItem, quantity: newItem.quantity || 1 }],
-          });
-        } else {
-          console.log("User cancelled, keeping current cart");
-        }
-        document.body.removeChild(dialog);
-      });
-
-      // Handle the confirm button click
-      const confirmButton = dialog.querySelector(
-        'button[style*="background-color"]'
-      );
-      if (confirmButton) {
-        confirmButton.addEventListener("click", () => {
-          dialog.returnValue = "confirm";
-          dialog.close();
+      // Return a promise that resolves with the result
+      return new Promise((resolve) => {
+        dialog.addEventListener("close", () => {
+          const result = dialog.returnValue === "confirm";
+          if (result) {
+            console.log("User confirmed, clearing cart and adding new item");
+            setCart({
+              restaurantId: restaurantInfo.restaurantId,
+              restaurantName: restaurantInfo.restaurantName,
+              restaurantAccentColor: restaurantInfo.restaurantAccentColor,
+              items: [{ ...newItem, quantity: newItem.quantity || 1 }],
+            });
+            resolve(true);
+          } else {
+            console.log("User cancelled, keeping current cart");
+            resolve(false);
+          }
+          document.body.removeChild(dialog);
         });
-      }
 
-      return false;
+        // Handle the confirm button click
+        const confirmButton = dialog.querySelector(
+          'button[style*="background-color"]'
+        );
+        if (confirmButton) {
+          confirmButton.addEventListener("click", () => {
+            dialog.returnValue = "confirm";
+            dialog.close();
+          });
+        }
+      });
     }
 
     console.log("Same restaurant, proceeding with normal add logic");
@@ -238,7 +240,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         };
       }
     });
-    return true;
+    return Promise.resolve(true);
   };
 
   // Helper function to compare options equality
