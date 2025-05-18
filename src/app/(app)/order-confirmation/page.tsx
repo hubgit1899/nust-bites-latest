@@ -132,7 +132,10 @@ export default function OrderConfirmationPage() {
               <h3 className="font-medium mb-3">Order Items</h3>
               <div className="space-y-3">
                 {orderDetails.items.map((item, index) => (
-                  <div key={index} className="flex justify-between items-start">
+                  <div
+                    key={`${orderDetails.orderId}-item-${index}`}
+                    className="flex justify-between items-start"
+                  >
                     <div>
                       <p className="font-medium">
                         {item.quantity}x {item.name}
@@ -141,7 +144,7 @@ export default function OrderConfirmationPage() {
                         <div className="mt-1 space-y-0.5">
                           {item.options.map((option, optIndex) => (
                             <p
-                              key={optIndex}
+                              key={`${orderDetails.orderId}-item-${index}-option-${optIndex}`}
                               className="text-sm text-base-content/70"
                             >
                               {option.optionHeader}: {option.selected}

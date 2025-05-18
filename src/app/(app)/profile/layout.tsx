@@ -7,14 +7,14 @@ import { Package, User, Settings, History, Heart, MapPin } from "lucide-react";
 
 const profileLinks = [
   {
-    name: "My Orders",
-    href: "/profile/my-orders",
-    icon: Package,
-  },
-  {
     name: "Profile",
     href: "/profile",
     icon: User,
+  },
+  {
+    name: "My Orders",
+    href: "/profile/my-orders",
+    icon: Package,
   },
   {
     name: "Order History",
@@ -50,7 +50,7 @@ export default function ProfileLayout({
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar */}
         <div className="lg:col-span-1">
-          <div className="bg-base-200/30 rounded-2xl p-4 shadow-sm">
+          <div className="lg:sticky lg:top-20 bg-base-200/30 rounded-2xl p-4 shadow-sm">
             <nav className="space-y-1">
               {profileLinks.map((link) => {
                 const isActive = pathname === link.href;
