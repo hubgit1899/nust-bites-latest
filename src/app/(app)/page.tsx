@@ -170,7 +170,7 @@ export default function Home() {
                 <div className="text-primary font-bold text-xl">1</div>
               </div>
               <h4 className="text-lg font-semibold mb-2">Browse Restaurants</h4>
-              <p className="text-base-content/70">Explore our selection of on-campus restaurants</p>
+              <p className="text-base-content/70">Explore our selection of restaurants</p>
             </div>
             
             <div className="flex flex-col items-center text-center">
