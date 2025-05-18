@@ -150,19 +150,16 @@ export default function CheckoutPage() {
         toast.success("Order placed successfully!");
         setIsRedirecting(true);
 
-        // Store order ID in session storage before redirecting
+        // Store order ID in session storage
         sessionStorage.setItem("lastOrderId", orderResponse.data.orderId);
 
-        // Redirect first
+        // Clear cart first
+        clearCart();
+
+        // Then redirect to order confirmation
         router.push(
           `/order-confirmation?orderId=${orderResponse.data.orderId}`
         );
-
-        // Clear cart after a delay
-        setTimeout(() => {
-          clearCart();
-          setIsRedirecting(false);
-        }, 1000);
       } else {
         // Handle removed items
         if (orderResponse.data.removedItems?.length > 0) {
