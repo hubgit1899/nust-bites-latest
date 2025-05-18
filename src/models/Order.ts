@@ -31,6 +31,8 @@ export interface Order extends Document {
   specialInstructions?: string;
   riderRating?: number;
   riderReview?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 export interface Item {
   menuItem: Types.ObjectId | any;
