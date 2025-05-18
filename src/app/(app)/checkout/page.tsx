@@ -113,6 +113,7 @@ export default function CheckoutPage() {
 
       if (signatureRes.status !== 200) {
         toast.error("Failed to authorize upload");
+        setIsPlacingOrder(false);
         return;
       }
 
@@ -653,16 +654,29 @@ export default function CheckoutPage() {
 
                 <button
                   onClick={handleButtonClick}
+                  className={`btn btn-md w-full mt-6 shadow-sm`}
+                  style={{
+                    backgroundColor: isValidImage
+                      ? cart.restaurantAccentColor
+                      : "var(--fallback-bc,oklch(var(--bc)))",
+                    color: isValidImage
+                      ? "white"
+                      : "var(--fallback-bc,oklch(var(--bc)))",
+                    borderColor: isValidImage
+                      ? cart.restaurantAccentColor
+                      : "var(--fallback-bc,oklch(var(--bc)))",
+                  }}
                   disabled={isPlacingOrder}
-                  className="btn btn-primary w-full text-lg font-semibold"
                 >
                   {isPlacingOrder ? (
                     <>
                       <span className="loading loading-spinner loading-sm"></span>
                       Placing Order...
                     </>
-                  ) : (
+                  ) : isValidImage ? (
                     "Confirm Order"
+                  ) : (
+                    "Upload Payment Slip"
                   )}
                 </button>
 
@@ -695,7 +709,6 @@ export default function CheckoutPage() {
           </div>
           <button
             onClick={handleButtonClick}
-            disabled={isPlacingOrder}
             className={`btn px-8`}
             style={{
               backgroundColor: isValidImage
@@ -708,6 +721,7 @@ export default function CheckoutPage() {
                 ? cart.restaurantAccentColor
                 : "var(--fallback-bc,oklch(var(--bc)))",
             }}
+            disabled={isPlacingOrder}
           >
             {isPlacingOrder ? (
               <>
