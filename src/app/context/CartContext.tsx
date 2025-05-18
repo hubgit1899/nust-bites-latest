@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { calculateStreetDistance } from "@/lib/distance";
+import axios from "axios";
 
 export interface CartItem {
   menuItemId: string;
@@ -34,6 +34,7 @@ export interface Cart {
     lng: number;
   };
   items: CartItem[];
+  specialInstructions?: string;
 }
 
 interface CartContextType {
@@ -64,12 +65,15 @@ interface CartContextType {
   calculateDeliveryFee: (userLocation: {
     lat: number;
     lng: number;
-  }) => Promise<number>;
+  }) => Promise<{ deliveryFee: number; baseFee: number; distance: number }>;
   deliveryFee: number | null;
   setDeliveryFee: (fee: number) => void;
   calculateItemTotal: (item: CartItem) => number;
   deliveryAddress: string;
   setDeliveryAddress: (address: string) => void;
+  setSpecialInstructions: (instructions: string) => void;
+  userLocation: { lat: number; lng: number } | null;
+  setUserLocation: (location: { lat: number; lng: number } | null) => void;
 }
 
 // Default empty cart state
@@ -82,6 +86,7 @@ const defaultCart: Cart = {
     lng: 0,
   },
   items: [],
+  specialInstructions: "",
 };
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -98,11 +103,28 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<Cart>(defaultCart);
   const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
   const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   const { data: session } = useSession();
+
+  // Calculate delivery fee when user location changes
+  useEffect(() => {
+    const calculateFee = async () => {
+      if (userLocation && cart.restaurantId) {
+        const result = await calculateDeliveryFee(userLocation);
+        setDeliveryFee(result.deliveryFee);
+      }
+    };
+    calculateFee();
+  }, [userLocation, cart.restaurantId]);
 
   useEffect(() => {
     // Load cart from localStorage
     const savedCart = localStorage.getItem("cart");
+    const savedAddress = localStorage.getItem("deliveryAddress");
+    const savedLocation = localStorage.getItem("userLocation");
 
     if (savedCart) {
       try {
@@ -112,12 +134,28 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         console.error("Failed to parse cart from localStorage", error);
       }
     }
+
+    if (savedAddress) {
+      setDeliveryAddress(savedAddress);
+    }
+
+    if (savedLocation) {
+      try {
+        setUserLocation(JSON.parse(savedLocation));
+      } catch (error) {
+        console.error("Failed to parse user location from localStorage", error);
+      }
+    }
   }, []);
 
-  // Save cart to localStorage
+  // Save cart and delivery address to localStorage
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cart));
-  }, [cart]);
+    localStorage.setItem("deliveryAddress", deliveryAddress);
+    if (userLocation) {
+      localStorage.setItem("userLocation", JSON.stringify(userLocation));
+    }
+  }, [cart, deliveryAddress, userLocation]);
 
   const addItem = (
     newItem: CartItem,
@@ -162,6 +200,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         restaurantAccentColor: restaurantInfo.restaurantAccentColor,
         restaurantLocation: restaurantInfo.restaurantLocation,
         items: [{ ...newItem, quantity: newItem.quantity || 1 }],
+        specialInstructions: "",
       });
       return Promise.resolve(true);
     }
@@ -215,6 +254,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
               restaurantAccentColor: restaurantInfo.restaurantAccentColor,
               restaurantLocation: restaurantInfo.restaurantLocation,
               items: [{ ...newItem, quantity: newItem.quantity || 1 }],
+              specialInstructions: "",
             });
             resolve(true);
           } else {
@@ -391,31 +431,43 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Add new function to calculate delivery fee
+
   const calculateDeliveryFee = async (userLocation: {
     lat: number;
     lng: number;
-  }): Promise<number> => {
+  }): Promise<{
+    deliveryFee: number;
+    baseFee: number;
+    distance: number;
+  }> => {
     try {
-      // Get admin settings
-      const response = await fetch("/api/get-admin-settings");
-      const settings = await response.json();
+      const response = await axios.post("/api/get-delivery-fee-details", {
+        deliveryLocation: userLocation,
+        restaurantLocation: cart.restaurantLocation,
+      });
 
-      // Calculate distance
-      const distance = await calculateStreetDistance(
-        userLocation.lat,
-        userLocation.lng,
-        cart.restaurantLocation.lat,
-        cart.restaurantLocation.lng
-      );
+      const data = response.data;
 
-      // Calculate delivery fee
-      const deliveryFee =
-        settings.baseDeliveryFee + distance * settings.deliveryFeePerKm;
-      return Math.round(deliveryFee);
-    } catch (error) {
-      console.error("Error calculating delivery fee:", error);
-      return 0;
+      if (!data.success) {
+        throw new Error(data.message || "Failed to calculate delivery fee");
+      }
+
+      return data;
+    } catch (error: any) {
+      if (axios.isAxiosError(error)) {
+        const message =
+          error.response?.data?.message || "Failed to calculate delivery route";
+        throw new Error(message);
+      }
+      throw error;
     }
+  };
+
+  const setSpecialInstructions = (instructions: string) => {
+    setCart((prevCart) => ({
+      ...prevCart,
+      specialInstructions: instructions,
+    }));
   };
 
   return (
@@ -436,6 +488,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         calculateItemTotal,
         deliveryAddress,
         setDeliveryAddress,
+        setSpecialInstructions,
+        userLocation,
+        setUserLocation,
       }}
     >
       {children}

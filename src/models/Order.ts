@@ -1,11 +1,9 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
-import { getNextSequence } from "@/helpers/getNextSequence";
 import type { Location } from "@/types/location";
-import ItemSchema from "./ItemSchema";
 
 export interface Order extends Document {
   _id: { toString(): string };
-  orderId: number;
+  orderId: string;
   customer: Types.ObjectId; // <- Changed to ObjectId
   rider: Types.ObjectId; // <- Changed to ObjectId
   status:
@@ -16,25 +14,26 @@ export interface Order extends Document {
     | "PICKED UP"
     | "EN ROUTE B"
     | "DELIVERED"
-    | "REFUNDED"
     | "CANCELLED";
   restaurant: Types.ObjectId; // <- Changed to ObjectId
   pickupLocation: Location;
   pickupAddress: string;
   dropoffLocation: Location;
   dropoffAddress: string;
+  distance: number;
   pickupTime: Date;
   dropoffTime: Date;
-  totalAmount: number;
+  orderAmount: number;
   deliveryFee: number;
-  paymentStatus: "paid" | "unpaid";
-  items: Item[]; // TS interface (not enforced by schema)
+  paymentSlipURL?: string;
+  paymentStatus: "PAID" | "UNPAID" | "VERIFIED" | "REFUNDED";
+  items: Item[];
   specialInstructions?: string;
   riderRating?: number;
   riderReview?: string;
 }
 export interface Item {
-  menuItemId: number;
+  menuItem: Types.ObjectId | any;
   name: string;
   basePrice: number;
   imageURL: string;
@@ -44,12 +43,42 @@ export interface Item {
     selected: string;
     additionalPrice: number;
   }[];
+  quantity: number; // Added
+  restaurant?: Types.ObjectId | any;
 }
+
+const ItemSchema: Schema<Item> = new Schema({
+  menuItem: {
+    type: Schema.Types.ObjectId,
+    ref: "menuitems",
+    required: true,
+  },
+  name: { type: String, required: true },
+  basePrice: { type: Number, required: true },
+
+  imageURL: { type: String },
+  category: { type: String },
+  options: {
+    type: [
+      {
+        optionHeader: { type: String, required: true },
+        selected: { type: String, required: true },
+        additionalPrice: { type: Number, required: true },
+      },
+    ],
+    default: [],
+  },
+  quantity: { type: Number, required: true },
+  restaurant: {
+    type: Schema.Types.ObjectId,
+    ref: "restaurant",
+  },
+});
 
 const OrderSchema: Schema<Order> = new Schema(
   {
-    orderId: { type: Number, required: true, unique: true },
-    customer: [{ type: Schema.Types.ObjectId, ref: "User", required: true }],
+    orderId: { type: String, required: true, unique: true },
+    customer: { type: Schema.Types.ObjectId, ref: "User", required: true },
     rider: { type: Schema.Types.ObjectId, ref: "User" },
     status: {
       type: String,
@@ -61,33 +90,35 @@ const OrderSchema: Schema<Order> = new Schema(
         "PICKED UP",
         "EN ROUTE B",
         "DELIVERED",
-        "REFUNDED",
         "CANCELLED",
       ],
       default: "PENDING",
     },
-    restaurant: [
-      { type: Schema.Types.ObjectId, ref: "Restaurant", required: true },
-    ],
+    restaurant: {
+      type: Schema.Types.ObjectId,
+      ref: "restaurant",
+      required: true,
+    },
     pickupLocation: {
       lat: { type: Number, required: true },
       lng: { type: Number, required: true },
-      required: true,
+      address: { type: String, required: true },
     },
-    pickupAddress: { type: String, required: true },
     dropoffLocation: {
       lat: { type: Number, required: true },
       lng: { type: Number, required: true },
-      required: true,
+      address: { type: String, required: true },
     },
-    dropoffAddress: { type: String, required: true },
-    pickupTime: { type: Date, required: true },
-    dropoffTime: { type: Date, required: true },
-    totalAmount: { type: Number, required: true },
+    distance: { type: Number, required: true },
+    pickupTime: { type: Date },
+    dropoffTime: { type: Date },
+    orderAmount: { type: Number, required: true },
     deliveryFee: { type: Number, required: true },
+    paymentSlipURL: { type: String, required: true },
     paymentStatus: {
       type: String,
-      enum: ["paid", "unpaid"],
+      enum: ["PAID", "UNPAID", "VERIFIED", "REFUNDED"],
+      default: "UNPAID",
       required: true,
     },
     items: {
@@ -102,14 +133,6 @@ const OrderSchema: Schema<Order> = new Schema(
     timestamps: true,
   }
 );
-
-// Auto-increment orderId
-OrderSchema.pre("save", async function (next) {
-  if (this.isNew) {
-    this.orderId = await getNextSequence("orderId");
-  }
-  next();
-});
 
 const OrderModel =
   (mongoose.models.Order as mongoose.Model<Order>) ||

@@ -6,6 +6,7 @@ export const errorMessages = {
   PASSWORDS_DO_NOT_MATCH: "Passwords do not match.",
   WEAK_PASSWORD: "Password must meet all strength requirements.",
   INVALID_EMAIL_FORMAT: "Invalid email address.",
+  INVALID_FORM_DATA: "Invalid form data.",
   FIELD_REQUIRED: "This field is required.",
   UNKNOWN_ERROR: "Something went wrong. Please try again later.",
   INVALID_VERIFICATION_CODE: "The verification code is incorrect or expired.",
@@ -15,4 +16,6 @@ export const errorMessages = {
     "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
   USERNAME_REQUIRES:
     "Username can only contain letters, numbers, underscores, and dots.",
+  USER_NOT_VERIFIED: "Unauthorized or unverified user.",
+  USER_NOT_CUSTOMER: "Customer details missing.",
 };

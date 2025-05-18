@@ -280,7 +280,7 @@ const ViewMenuItem: React.FC<ViewMenuItemProps> = ({
     });
 
     if (success) {
-      toast.success("Added to cart");
+      toast.success(`Added ${menuItem.name} to cart.`);
       if (modalRef.current) {
         modalRef.current.close();
       }

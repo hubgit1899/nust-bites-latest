@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface User extends Document {
+  _id: { toString(): string };
   username: string;
   email: string;
   password: string;

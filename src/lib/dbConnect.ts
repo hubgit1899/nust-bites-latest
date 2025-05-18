@@ -1,25 +1,28 @@
 import mongoose from "mongoose";
-import chalk from "chalk"; // remove in production
 
-type ConnectionObject = {
-  isConnected?: number;
-};
+const MONGODB_URI = process.env.MONGODB_URI!;
 
-const connection: ConnectionObject = {};
+if (!MONGODB_URI) {
+  throw new Error(
+    "Please define the MONGODB_URI environment variable inside .env.local"
+  );
+}
 
-async function dbConnect(): Promise<void> {
-  const now = new Date(); // remove in production
-  const time = now.toLocaleTimeString(); // remove in production
-  console.log(chalk.bold.cyanBright(`[${time}] Current Time`)); // remove in production
+let isConnected = false;
 
-  if (connection.isConnected) {
-    console.log("MongoDB is already connected");
+async function dbConnect() {
+  if (isConnected) {
     return;
   }
 
   try {
-    const db = await mongoose.connect(process.env.MONGODB_URI || "", {});
-    connection.isConnected = db.connections[0].readyState;
+    await mongoose.connect(MONGODB_URI);
+
+    // Import models here to ensure they are registered
+    require("@/models/Restaurant");
+    require("@/models/Order");
+
+    isConnected = true;
     console.log("MongoDB connected successfully");
   } catch (error) {
     console.error("MongoDB connection error:", error);

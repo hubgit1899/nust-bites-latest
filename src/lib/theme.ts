@@ -1,11 +1,18 @@
 // theme.ts
+import axios from "axios";
+
 export const DEFAULT_LIGHT = "cupcake";
 export const DEFAULT_DARK = "night";
 
 export async function getThemes() {
   try {
-    const res = await fetch("/api/get-admin-settings");
-    const data = await res.json();
+    const response = await axios.get("/api/get-admin-settings");
+
+    const { success, data } = response.data;
+
+    if (!success || !data) {
+      throw new Error("Invalid theme data");
+    }
 
     return {
       LIGHT_THEME:
@@ -13,7 +20,7 @@ export async function getThemes() {
       DARK_THEME: data.darkTheme === "default" ? DEFAULT_DARK : data.darkTheme,
     };
   } catch (error) {
-    console.error("Failed to fetch theme settings, using default.", error);
+    console.error("❌ Failed to fetch theme settings, using defaults:", error);
     return {
       LIGHT_THEME: DEFAULT_LIGHT,
       DARK_THEME: DEFAULT_DARK,
