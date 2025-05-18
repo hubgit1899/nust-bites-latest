@@ -6,11 +6,12 @@ import OrderModel from "@/models/Order";
 import RestaurantModel from "@/models/Restaurant";
 import { errorMessages } from "@/app/constants/errorMessages";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { orderId: string } }
-) {
+export async function GET(request: NextRequest) {
   await dbConnect();
+
+  const url = new URL(request.url);
+  const segments = url.pathname.split("/");
+  const orderId = segments[segments.indexOf("orders") + 1];
 
   const session = await getServerSession(authOptions);
   if (!session?.user?.isVerified) {
@@ -29,7 +30,7 @@ export async function GET(
 
   try {
     const order = await OrderModel.findOne({
-      orderId: params.orderId,
+      orderId: orderId,
       customer: session.user._id,
     }).populate({
       path: "restaurant",
