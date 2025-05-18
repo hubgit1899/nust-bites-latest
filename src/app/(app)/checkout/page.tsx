@@ -42,6 +42,7 @@ export default function CheckoutPage() {
   const [fileError, setFileError] = useState<string | null>(null);
   const [isChecking, setIsChecking] = useState(true);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const uploadSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -103,6 +104,7 @@ export default function CheckoutPage() {
       return;
     }
 
+    setIsPlacingOrder(true);
     try {
       // 1. Get signed Cloudinary upload credentials
       const signatureRes = await axios.post("/api/sign-cloudinary-upload", {
@@ -185,6 +187,8 @@ export default function CheckoutPage() {
         error.response?.data?.message ||
           "Something went wrong. Please try again."
       );
+    } finally {
+      setIsPlacingOrder(false);
     }
   };
 
@@ -649,20 +653,17 @@ export default function CheckoutPage() {
 
                 <button
                   onClick={handleButtonClick}
-                  className={`btn btn-md w-full mt-6 shadow-sm`}
-                  style={{
-                    backgroundColor: isValidImage
-                      ? cart.restaurantAccentColor
-                      : "var(--fallback-bc,oklch(var(--bc)))",
-                    color: isValidImage
-                      ? "white"
-                      : "var(--fallback-bc,oklch(var(--bc)))",
-                    borderColor: isValidImage
-                      ? cart.restaurantAccentColor
-                      : "var(--fallback-bc,oklch(var(--bc)))",
-                  }}
+                  disabled={isPlacingOrder}
+                  className="btn btn-primary w-full text-lg font-semibold"
                 >
-                  {isValidImage ? "Confirm Order" : "Upload Payment Slip"}
+                  {isPlacingOrder ? (
+                    <>
+                      <span className="loading loading-spinner loading-sm"></span>
+                      Placing Order...
+                    </>
+                  ) : (
+                    "Confirm Order"
+                  )}
                 </button>
 
                 <p className="text-sm text-base-content/70 text-center mt-4">
@@ -694,6 +695,7 @@ export default function CheckoutPage() {
           </div>
           <button
             onClick={handleButtonClick}
+            disabled={isPlacingOrder}
             className={`btn px-8`}
             style={{
               backgroundColor: isValidImage
@@ -707,7 +709,16 @@ export default function CheckoutPage() {
                 : "var(--fallback-bc,oklch(var(--bc)))",
             }}
           >
-            {isValidImage ? "Confirm Order" : "Upload Slip"}
+            {isPlacingOrder ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Placing...
+              </>
+            ) : isValidImage ? (
+              "Confirm Order"
+            ) : (
+              "Upload Slip"
+            )}
           </button>
         </div>
       </div>
