@@ -141,15 +141,14 @@ export default function MyOrdersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">My Orders</h1>
+    <div className="container mx-auto max-w-4xl">
       <div className="grid gap-6">
         {orders.map((order) => {
           const StatusIcon = statusConfig[order.status].icon;
           return (
             <div
               key={order.orderId}
-              className="bg-base-200/30 rounded-2xl p-6 shadow-sm"
+              className="bg-base-200 rounded-2xl p-4 shadow-sm"
             >
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                 <div>
@@ -184,7 +183,7 @@ export default function MyOrdersPage() {
 
               <div className="space-y-4">
                 {/* Order Items */}
-                <div className="bg-base-300/30 rounded-xl p-4">
+                <div className="bg-base-300 rounded-xl p-4">
                   <h3 className="font-medium mb-3">Order Items</h3>
                   <div className="space-y-3">
                     {order.items.map((item, index) => (
@@ -223,7 +222,7 @@ export default function MyOrdersPage() {
                 </div>
 
                 {/* Delivery Details */}
-                <div className="bg-base-300/30 rounded-xl p-4">
+                <div className="bg-base-300 rounded-xl p-4">
                   <h3 className="font-medium mb-3">Delivery Details</h3>
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
@@ -241,7 +240,7 @@ export default function MyOrdersPage() {
                 </div>
 
                 {/* Order Summary */}
-                <div className="bg-base-300/30 rounded-xl p-4">
+                <div className="bg-base-300 rounded-xl p-4">
                   <h3 className="font-medium mb-3">Order Summary</h3>
                   <div className="space-y-2">
                     <div className="flex justify-between text-base-content/70">

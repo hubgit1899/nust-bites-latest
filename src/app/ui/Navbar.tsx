@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import Cart from "../components/navbar/Cart";
 import Avatar from "../components/navbar/Avatar";
 import CustomerDetailsModal from "../components/navbar/CustomerDetailsModal";
+import { HousePlus, ShieldUser, Store, User as UserIcon } from "lucide-react";
 
 const Navbar = () => {
   const navbarRef = useRef<HTMLDivElement | null>(null);
@@ -227,14 +228,21 @@ const Navbar = () => {
                   />
                   <ul
                     tabIndex={0}
-                    className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
+                    className="menu menu-sm dropdown-content bg-base-200 rounded-box z-1 mt-3 w-52 p-2 shadow"
                   >
                     <li>
-                      <Link href="/profile">Profile</Link>
+                      <Link className="gap-1" href="/profile">
+                        <UserIcon size={15} />
+                        Profile
+                      </Link>
                     </li>
                     {roles?.isSuperAdmin && (
                       <li>
-                        <button onClick={() => router.push("/admin-dashboard")}>
+                        <button
+                          className="gap-1"
+                          onClick={() => router.push("/admin-dashboard")}
+                        >
+                          <ShieldUser size={15} />
                           Admin Dashboard
                         </button>
                       </li>
@@ -242,20 +250,24 @@ const Navbar = () => {
                     {roles?.isRestaurantOwner && (
                       <li>
                         <button
+                          className="gap-1"
                           onClick={() =>
                             router.push("/restaurant/my-restaurants")
                           }
                         >
+                          <Store size={15} />
                           My Restaurants
                         </button>
                       </li>
                     )}
                     <li>
                       <button
+                        className="gap-1"
                         onClick={() =>
                           router.push("/restaurant/add-restaurant")
                         }
                       >
+                        <HousePlus size={15} />
                         Add Restaurant
                       </button>
                     </li>

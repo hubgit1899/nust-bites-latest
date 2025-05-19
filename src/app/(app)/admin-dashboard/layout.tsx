@@ -3,51 +3,22 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Package,
-  User,
-  Settings,
-  History,
-  Heart,
-  MapPin,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { ShieldUser, Settings, ChevronDown, ChevronUp } from "lucide-react";
 
 const profileLinks = [
   {
-    name: "Profile",
-    href: "/profile",
-    icon: User,
-  },
-  {
-    name: "My Orders",
-    href: "/profile/my-orders",
-    icon: Package,
-  },
-  {
-    name: "Order History",
-    href: "/profile/order-history",
-    icon: History,
-  },
-  {
-    name: "Saved Addresses",
-    href: "/profile/addresses",
-    icon: MapPin,
-  },
-  {
-    name: "Favorites",
-    href: "/profile/favorites",
-    icon: Heart,
+    name: "Dashboard",
+    href: "/admin-dashboard",
+    icon: ShieldUser,
   },
   {
     name: "Settings",
-    href: "/profile/settings",
+    href: "/admin-dashboard/settings",
     icon: Settings,
   },
 ];
 
-export default function ProfileLayout({
+export default function AdminDashboardLayout({
   children,
 }: {
   children: React.ReactNode;

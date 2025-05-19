@@ -16,5 +16,5 @@ export const getAdminSettings = unstable_cache(
     };
   },
   ["admin-settings"],
-  { revalidate: 600 } // 10 minutes
+  { revalidate: 600, tags: ["admin-settings"] } // 10 minutes
 );

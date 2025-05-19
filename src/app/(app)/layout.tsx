@@ -7,7 +7,7 @@ import { ThemeProvider } from "../context/ThemeProvider";
 import { CartProvider } from "../context/CartContext";
 import Navbar from "../ui/Navbar";
 import Footer from "../ui/Footer";
-import Breadcrumbs from "../components/ui/Breadcrumbs";
+import Breadcrumbs from "../ui/Breadcrumbs";
 
 const poppins = Poppins({
   variable: "--font-poppins",

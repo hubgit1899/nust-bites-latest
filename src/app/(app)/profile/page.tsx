@@ -14,6 +14,7 @@ import {
   Edit2,
   Save,
   X,
+  Package,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -114,10 +115,10 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="bg-base-200/30 rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Profile</h1>
+    <div className="container mx-auto max-w-4xl">
+      <div className="bg-base-200 rounded-2xl p-4 sm:p-6 shadow-sm">
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold">Profile</h1>
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
@@ -127,10 +128,10 @@ export default function ProfilePage() {
               Edit Profile
             </button>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex gap-2 lg:gap-4">
               <button
                 onClick={() => setIsEditing(false)}
-                className="btn btn-ghost gap-2"
+                className="btn btn-soft btn-error gap-2 btn-sm lg:btn-md"
               >
                 <X size={18} />
                 Cancel
@@ -138,7 +139,7 @@ export default function ProfilePage() {
               <button
                 onClick={handleSubmit}
                 disabled={isLoading}
-                className="btn btn-primary gap-2"
+                className="btn btn-primary gap-2 btn-sm lg:btn-md"
               >
                 {isLoading ? (
                   <div className="loading loading-spinner loading-sm"></div>
@@ -151,11 +152,11 @@ export default function ProfilePage() {
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {/* Basic Information */}
-          <div className="bg-base-300/30 rounded-xl p-6">
+          <div className="bg-base-300 rounded-xl p-4 sm:p-6">
             <h2 className="text-lg font-semibold mb-4">Basic Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="form-control">
                 <label className="label">
                   <span className="label-text flex items-center gap-2">
@@ -169,7 +170,7 @@ export default function ProfilePage() {
                   value={profile.username}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  className="input input-bordered"
+                  className="input input-bordered w-full"
                 />
               </div>
 
@@ -186,7 +187,7 @@ export default function ProfilePage() {
                   value={profile.email}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  className="input input-bordered"
+                  className="input input-bordered w-full"
                 />
               </div>
 
@@ -203,7 +204,7 @@ export default function ProfilePage() {
                   value={profile.fullName || ""}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  className="input input-bordered"
+                  className="input input-bordered w-full"
                 />
               </div>
 
@@ -220,24 +221,20 @@ export default function ProfilePage() {
                   value={profile.phoneNumber || ""}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  className="input input-bordered"
+                  className="input input-bordered w-full"
                 />
               </div>
             </div>
           </div>
 
           {/* University Information */}
-          <div className="bg-base-300/30 rounded-xl p-6">
+          <div className="bg-base-300 rounded-xl p-4 sm:p-6">
             <h2 className="text-lg font-semibold mb-4">
               University Information
             </h2>
             <div className="space-y-4">
               <div className="form-control">
-                <label className="label cursor-pointer">
-                  <span className="label-text flex items-center gap-2">
-                    <GraduationCap size={16} />
-                    Are you a university student?
-                  </span>
+                <label className="label cursor-pointer justify-start gap-2">
                   <input
                     type="checkbox"
                     name="isUniStudent"
@@ -246,11 +243,15 @@ export default function ProfilePage() {
                     disabled={!isEditing}
                     className="checkbox"
                   />
+                  <span className="label-text flex items-center gap-2">
+                    <GraduationCap size={16} />
+                    Are you a university student?
+                  </span>
                 </label>
               </div>
 
               {profile.isUniStudent && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="form-control">
                     <label className="label">
                       <span className="label-text flex items-center gap-2">
@@ -264,7 +265,7 @@ export default function ProfilePage() {
                       value={profile.university || ""}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="input input-bordered"
+                      className="input input-bordered w-full"
                     />
                   </div>
 
@@ -281,7 +282,7 @@ export default function ProfilePage() {
                       value={profile.studentId || ""}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="input input-bordered"
+                      className="input input-bordered w-full"
                     />
                   </div>
                 </div>
@@ -290,15 +291,11 @@ export default function ProfilePage() {
           </div>
 
           {/* Hostel Information */}
-          <div className="bg-base-300/30 rounded-xl p-6">
+          <div className="bg-base-300 rounded-xl p-4 sm:p-6">
             <h2 className="text-lg font-semibold mb-4">Hostel Information</h2>
             <div className="space-y-4">
               <div className="form-control">
-                <label className="label cursor-pointer">
-                  <span className="label-text flex items-center gap-2">
-                    <Home size={16} />
-                    Are you a hostelite?
-                  </span>
+                <label className="label cursor-pointer justify-start gap-2">
                   <input
                     type="checkbox"
                     name="isHostelite"
@@ -307,11 +304,15 @@ export default function ProfilePage() {
                     disabled={!isEditing}
                     className="checkbox"
                   />
+                  <span className="label-text flex items-center gap-2">
+                    <Home size={16} />
+                    Are you a hostelite?
+                  </span>
                 </label>
               </div>
 
               {profile.isHostelite && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="form-control">
                     <label className="label">
                       <span className="label-text flex items-center gap-2">
@@ -325,7 +326,7 @@ export default function ProfilePage() {
                       value={profile.hostelName || ""}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="input input-bordered"
+                      className="input input-bordered w-full"
                     />
                   </div>
 
@@ -342,7 +343,7 @@ export default function ProfilePage() {
                       value={profile.roomNumber || ""}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="input input-bordered"
+                      className="input input-bordered w-full"
                     />
                   </div>
                 </div>
@@ -352,24 +353,12 @@ export default function ProfilePage() {
         </form>
 
         {/* Quick Links */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link
             href="/profile/my-orders"
             className="btn btn-outline w-full justify-start gap-2"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-              />
-            </svg>
+            <Package size={20} />
             My Orders
           </Link>
 
@@ -377,25 +366,7 @@ export default function ProfilePage() {
             href="/profile/addresses"
             className="btn btn-outline w-full justify-start gap-2"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
+            <MapPin size={20} />
             Saved Addresses
           </Link>
         </div>
