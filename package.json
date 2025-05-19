@@ -45,6 +45,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@rollup/plugin-terser": "^0.4.4",
     "@tailwindcss/postcss": "^4",
     "@types/leaflet": "^1.9.17",
     "@types/mongoose-autopopulate": "^0.10.6",
@@ -58,6 +59,7 @@
     "eslint-config-prettier": "^10.1.2",
     "mongoose-schema-jsonschema": "^3.0.2",
     "prettier": "^3.5.3",
+    "rimraf": "^5.0.5",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
