@@ -8,6 +8,7 @@ import { CartProvider } from "../context/CartContext";
 import Navbar from "../ui/Navbar";
 import Footer from "../ui/Footer";
 import Breadcrumbs from "../ui/Breadcrumbs";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -64,7 +65,10 @@ export default function RootLayout({
                 <div className="relative z-30 w-full pointer-events-auto">
                   <Breadcrumbs />
                 </div>
-                <main className="relative z-10">{children}</main>
+                <main className="relative z-10">
+                  {children}
+                  <SpeedInsights />
+                </main>
               </div>
               <Footer />
             </CartProvider>
