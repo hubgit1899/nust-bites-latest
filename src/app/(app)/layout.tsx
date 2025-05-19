@@ -16,8 +16,29 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "nustbites",
-  description: "nustbites",
+  title: "NUST Bites",
+  description: "Your campus food delivery platform",
+  manifest: "/manifest.json",
+  themeColor: "#000000",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "NUST Bites",
+  },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({
