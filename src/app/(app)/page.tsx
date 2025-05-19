@@ -125,11 +125,9 @@ export default function Home() {
                   </div>
                   <div className="absolute top-2 right-2">
                     <div
-                      className="badge badge-sm"
-                      style={{
-                        backgroundColor: restaurant.accentColor,
-                        color: "white",
-                      }}
+                      className={`badge badge-sm badge-soft opacity-75 ${
+                        restaurant.online ? "badge-success" : "badge-error"
+                      }`}
                     >
                       {restaurant.online ? "Open Now" : "Closed"}
                     </div>
