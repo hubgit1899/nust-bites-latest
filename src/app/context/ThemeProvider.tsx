@@ -6,11 +6,20 @@ import { getThemes, DEFAULT_LIGHT, DEFAULT_DARK } from "@/lib/theme";
 export const ThemeContext = createContext({
   theme: DEFAULT_LIGHT,
   toggleTheme: () => {},
-  themeConfig: { light: DEFAULT_LIGHT, dark: DEFAULT_DARK }, // ✅ new
+  themeConfig: { light: DEFAULT_LIGHT, dark: DEFAULT_DARK },
 });
 
+// Simple loading component
+function ThemeLoading() {
+  return (
+    <div className="min-h-screen bg-white dark:bg-gray-800 flex items-center justify-center">
+      <span className="loading loading-bars loading-lg"></span>
+    </div>
+  );
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<string | null>(null);
+  const [theme, setTheme] = useState<string>(DEFAULT_LIGHT);
   const [themeConfig, setThemeConfig] = useState<{
     light: string;
     dark: string;
@@ -18,41 +27,62 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     light: DEFAULT_LIGHT,
     dark: DEFAULT_DARK,
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const initTheme = async () => {
-      const { LIGHT_THEME, DARK_THEME } = await getThemes();
+      try {
+        // Set immediate theme for initial render
+        const storedTheme = localStorage.getItem("theme");
+        const systemPrefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
 
-      setThemeConfig({
-        light: LIGHT_THEME,
-        dark: DARK_THEME,
-      });
+        const immediateTheme =
+          storedTheme || (systemPrefersDark ? DEFAULT_DARK : DEFAULT_LIGHT);
+        setTheme(immediateTheme);
+        document.documentElement.setAttribute("data-theme", immediateTheme);
+        document.documentElement.classList.add(immediateTheme);
 
-      const storedTheme = localStorage.getItem("theme");
-      const systemPrefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
+        // Fetch DB themes
+        const { LIGHT_THEME, DARK_THEME } = await getThemes();
 
-      let initialTheme = storedTheme;
+        setThemeConfig({
+          light: LIGHT_THEME,
+          dark: DARK_THEME,
+        });
 
-      // ✅ Validate stored theme
-      if (storedTheme !== LIGHT_THEME && storedTheme !== DARK_THEME) {
-        initialTheme = systemPrefersDark ? DARK_THEME : LIGHT_THEME;
-        localStorage.setItem("theme", initialTheme!);
+        // Validate and update
+        let finalTheme: string;
+        if (
+          !storedTheme ||
+          (storedTheme !== LIGHT_THEME && storedTheme !== DARK_THEME)
+        ) {
+          finalTheme = systemPrefersDark ? DARK_THEME : LIGHT_THEME;
+          localStorage.setItem("theme", finalTheme);
+        } else {
+          finalTheme = storedTheme;
+        }
+
+        const appliedTheme = finalTheme;
+
+        if (appliedTheme !== immediateTheme) {
+          setTheme(appliedTheme);
+          document.documentElement.setAttribute("data-theme", appliedTheme);
+          document.documentElement.classList.remove(immediateTheme);
+          document.documentElement.classList.add(appliedTheme);
+        }
+      } catch (error) {
+        console.error("Failed to initialize theme:", error);
+      } finally {
+        setIsLoading(false);
       }
-
-      setTheme(initialTheme || LIGHT_THEME);
-
-      const appliedTheme = initialTheme || LIGHT_THEME;
-      document.documentElement.setAttribute("data-theme", appliedTheme);
-      document.documentElement.classList.add(appliedTheme);
     };
 
     initTheme();
   }, []);
 
   const toggleTheme = () => {
-    if (!theme) return;
     const newTheme =
       theme === themeConfig.dark ? themeConfig.light : themeConfig.dark;
 
@@ -66,7 +96,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.classList.add(newTheme);
   };
 
-  if (!theme) return null;
+  if (isLoading) {
+    return <ThemeLoading />;
+  }
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, themeConfig }}>

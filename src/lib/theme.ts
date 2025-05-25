@@ -2,7 +2,7 @@
 import axios from "axios";
 
 export const DEFAULT_LIGHT: string = "cupcake";
-export const DEFAULT_DARK: string = "night";
+export const DEFAULT_DARK: string = "dim";
 
 export async function getThemes() {
   try {
