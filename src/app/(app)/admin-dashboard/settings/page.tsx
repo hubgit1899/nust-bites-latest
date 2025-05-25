@@ -14,6 +14,7 @@ interface AdminSettings {
 
 // Extract themes from globals.css
 const availableThemes = [
+  "default",
   "light",
   "dark",
   "cupcake",
@@ -56,8 +57,8 @@ export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<AdminSettings>({
     baseDeliveryFee: 75,
     deliveryFeePerKm: 25,
-    darkTheme: "dark",
-    lightTheme: "light",
+    darkTheme: "default",
+    lightTheme: "default",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

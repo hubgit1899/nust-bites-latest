@@ -1,8 +1,8 @@
 // theme.ts
 import axios from "axios";
 
-export const DEFAULT_LIGHT = "cupcake";
-export const DEFAULT_DARK = "night";
+export const DEFAULT_LIGHT: string = "cupcake";
+export const DEFAULT_DARK: string = "night";
 
 export async function getThemes() {
   try {

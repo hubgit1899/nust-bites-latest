@@ -14,7 +14,15 @@ import { useRouter } from "next/navigation";
 import Cart from "../components/navbar/Cart";
 import Avatar from "../components/navbar/Avatar";
 import CustomerDetailsModal from "../components/navbar/CustomerDetailsModal";
-import { HousePlus, ShieldUser, Store, User as UserIcon } from "lucide-react";
+import {
+  HousePlus,
+  LogIn,
+  LogOut,
+  ShieldUser,
+  Store,
+  User as UserIcon,
+  UserPlus,
+} from "lucide-react";
 
 const Navbar = () => {
   const navbarRef = useRef<HTMLDivElement | null>(null);
@@ -228,11 +236,11 @@ const Navbar = () => {
                   />
                   <ul
                     tabIndex={0}
-                    className="menu menu-sm dropdown-content bg-base-200 rounded-box z-1 mt-3 w-52 p-2 shadow"
+                    className="menu menu-md dropdown-content bg-base-300 rounded-box z-1 mt-1.5 w-52 p-2 shadow-lg"
                   >
                     <li>
                       <Link className="gap-1" href="/profile">
-                        <UserIcon size={15} />
+                        <UserIcon size={16} />
                         Profile
                       </Link>
                     </li>
@@ -242,7 +250,7 @@ const Navbar = () => {
                           className="gap-1"
                           onClick={() => router.push("/admin-dashboard")}
                         >
-                          <ShieldUser size={15} />
+                          <ShieldUser size={16} />
                           Admin Dashboard
                         </button>
                       </li>
@@ -255,7 +263,7 @@ const Navbar = () => {
                             router.push("/restaurant/my-restaurants")
                           }
                         >
-                          <Store size={15} />
+                          <Store size={16} />
                           My Restaurants
                         </button>
                       </li>
@@ -267,17 +275,18 @@ const Navbar = () => {
                           router.push("/restaurant/add-restaurant")
                         }
                       >
-                        <HousePlus size={15} />
+                        <HousePlus size={16} />
                         Add Restaurant
                       </button>
                     </li>
                     <li>
                       <button
-                        className="btn btn-xs mt-1 btn-outline btn-error"
+                        className="btn btn-xs mt-1 btn-outline btn-error gap-1"
                         onClick={() => {
                           signOut({ callbackUrl: "/" });
                         }}
                       >
+                        <LogOut size={16} />
                         Logout
                       </button>
                     </li>
@@ -288,17 +297,19 @@ const Navbar = () => {
           ) : page.isSignIn ? (
             // Not authenticated and on sign-in page
             <button
-              className="btn btn-primary btn-outline"
+              className="btn btn-primary btn-outline gap-2"
               onClick={() => router.push("/sign-up")}
             >
+              <UserPlus size={20} />
               Sign Up
             </button>
           ) : (
             // Not authenticated and not on sign-in page
             <button
-              className="btn btn-primary btn-outline"
+              className="btn btn-primary btn-outline gap-2"
               onClick={() => router.push("/sign-in")}
             >
+              <LogIn size={20} />
               Sign In
             </button>
           )}

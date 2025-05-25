@@ -36,13 +36,7 @@ export default function Home() {
   });
 
   return (
-    <div
-      className="relative w-full overflow-hidden flex flex-col"
-      style={{
-        minHeight:
-          "calc(100vh - var(--navbar-height) - var(--footer-height, 4rem))",
-      }}
-    >
+    <div className="flex flex-col flex-grow min-h-[calc(100vh-var(--navbar-height)-var(--footer-height,4rem))]">
       {/* Hero Section */}
       <div className="relative z-10 flex flex-col items-center justify-center py-12 text-center">
         <div className="max-w-4xl mx-auto bg-base-200/60 backdrop-blur-lg p-8 lg:p-14 rounded-2xl border border-primary/50 shadow-md">
