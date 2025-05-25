@@ -122,38 +122,45 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Load cart from localStorage
-    const savedCart = localStorage.getItem("cart");
-    const savedAddress = localStorage.getItem("deliveryAddress");
-    const savedLocation = localStorage.getItem("userLocation");
+    if (typeof window !== "undefined") {
+      const savedCart = localStorage.getItem("cart");
+      const savedAddress = localStorage.getItem("deliveryAddress");
+      const savedLocation = localStorage.getItem("userLocation");
 
-    if (savedCart) {
-      try {
-        const parsedCart = JSON.parse(savedCart);
-        setCart(parsedCart);
-      } catch (error) {
-        console.error("Failed to parse cart from localStorage", error);
+      if (savedCart) {
+        try {
+          const parsedCart = JSON.parse(savedCart);
+          setCart(parsedCart);
+        } catch (error) {
+          console.error("Failed to parse cart from localStorage", error);
+        }
       }
-    }
 
-    if (savedAddress) {
-      setDeliveryAddress(savedAddress);
-    }
+      if (savedAddress) {
+        setDeliveryAddress(savedAddress);
+      }
 
-    if (savedLocation) {
-      try {
-        setUserLocation(JSON.parse(savedLocation));
-      } catch (error) {
-        console.error("Failed to parse user location from localStorage", error);
+      if (savedLocation) {
+        try {
+          setUserLocation(JSON.parse(savedLocation));
+        } catch (error) {
+          console.error(
+            "Failed to parse user location from localStorage",
+            error
+          );
+        }
       }
     }
   }, []);
 
   // Save cart and delivery address to localStorage
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart));
-    localStorage.setItem("deliveryAddress", deliveryAddress);
-    if (userLocation) {
-      localStorage.setItem("userLocation", JSON.stringify(userLocation));
+    if (typeof window !== "undefined") {
+      localStorage.setItem("cart", JSON.stringify(cart));
+      localStorage.setItem("deliveryAddress", deliveryAddress);
+      if (userLocation) {
+        localStorage.setItem("userLocation", JSON.stringify(userLocation));
+      }
     }
   }, [cart, deliveryAddress, userLocation]);
 
@@ -218,6 +225,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     // Check if the item is from a different restaurant
     if (currentId !== newId) {
       console.log("Different restaurant detected, showing confirmation");
+
+      if (typeof window === "undefined") {
+        return Promise.resolve(false);
+      }
 
       // Create and show custom confirmation dialog
       const dialog = document.createElement("dialog");

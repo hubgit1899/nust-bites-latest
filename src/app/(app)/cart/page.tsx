@@ -58,7 +58,7 @@ function DeliveryLocationSection() {
       setLocationError(null);
       setRouteError(null);
 
-      if (navigator.geolocation) {
+      if (typeof window !== "undefined" && navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           async (pos) => {
             const newLocation = {
