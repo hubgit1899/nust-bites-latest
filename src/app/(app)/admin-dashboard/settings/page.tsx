@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Settings, Save, DollarSign, Palette } from "lucide-react";
+import { Save, DollarSign, Palette } from "lucide-react";
 
 interface AdminSettings {
   baseDeliveryFee: number;

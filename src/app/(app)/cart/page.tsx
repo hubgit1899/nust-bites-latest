@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useCart, CartItem } from "@/app/context/CartContext";
+import { useCart } from "@/app/context/CartContext";
 import { toast } from "sonner";
 import Link from "next/link";
 import {
@@ -32,8 +32,8 @@ function DeliveryLocationSection() {
   const [mode, setMode] = useState<"current" | "map">("current");
   const [loadingFee, setLoadingFee] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [baseDeliveryFee, setBaseDeliveryFee] = useState<number>(0);
-  const [isLocationSelected, setIsLocationSelected] = useState(false);
+  const [, setBaseDeliveryFee] = useState<number>(0);
+  const [, setIsLocationSelected] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [routeError, setRouteError] = useState<string | null>(null);
 
@@ -58,7 +58,7 @@ function DeliveryLocationSection() {
       setLocationError(null);
       setRouteError(null);
 
-      if (typeof window !== "undefined" && navigator.geolocation) {
+      if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           async (pos) => {
             const newLocation = {

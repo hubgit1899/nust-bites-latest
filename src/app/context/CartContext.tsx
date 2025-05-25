@@ -121,8 +121,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [userLocation, cart.restaurantId]);
 
   useEffect(() => {
-    // Load cart from localStorage
+    // Only run localStorage operations on the client side
     if (typeof window !== "undefined") {
+      // Load cart from localStorage
       const savedCart = localStorage.getItem("cart");
       const savedAddress = localStorage.getItem("deliveryAddress");
       const savedLocation = localStorage.getItem("userLocation");
@@ -225,10 +226,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     // Check if the item is from a different restaurant
     if (currentId !== newId) {
       console.log("Different restaurant detected, showing confirmation");
-
-      if (typeof window === "undefined") {
-        return Promise.resolve(false);
-      }
 
       // Create and show custom confirmation dialog
       const dialog = document.createElement("dialog");
