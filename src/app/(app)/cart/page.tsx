@@ -6,12 +6,14 @@ import { toast } from "sonner";
 import Link from "next/link";
 import {
   Trash2Icon,
-  MinusIcon,
-  PlusIcon,
   ShoppingCart,
   ScanBarcode,
   MapPin,
   MapPlus,
+  Minus,
+  Plus,
+  MessageSquare,
+  SquarePen,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import MapPopup from "@/app/components/MapPopup/MapPopup";
@@ -134,7 +136,7 @@ function DeliveryLocationSection() {
   }, [userLocation, cart.restaurantId]);
 
   return (
-    <div className="delivery-location-section bg-base-300/50 rounded-2xl p-4 mb-6">
+    <div className="delivery-location-section bg-base-300/50 rounded-2xl shadow-sm p-4 md:p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-bold text-md">Delivery Location</h2>
         <div className="relative">
@@ -191,26 +193,8 @@ function DeliveryLocationSection() {
 
       {mode === "current" && (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm text-base-content/70">
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
+          <div className="flex items-center gap-1 text-sm text-base-content/70">
+            <MapPin size={16} />
             {loadingFee
               ? "Calculating delivery fee..."
               : userLocation
@@ -396,8 +380,8 @@ export default function CartPage() {
       }
 
       // If verification successful, redirect to checkout page
-      toast.success("Order verified successfully!");
-      router.push("/checkout");
+      toast.success("Cart Items verified successfully!");
+      router.push("/cart/checkout");
     } catch (error) {
       console.error("Checkout error:", error);
       toast.error("Something went wrong during checkout. Please try again.");
@@ -478,10 +462,10 @@ export default function CartPage() {
               {cart.items.map((item) => (
                 <div
                   key={getCartItemKey(item)}
-                  className="p-4 md:p-5 hover:bg-base-300/10 transition-colors"
+                  className="p-2 lg:p-4 transition-colors"
                 >
                   {/* Mobile layout */}
-                  <div className="flex sm:hidden gap-3">
+                  <div className="flex bg-base-300/50 rounded-xl sm:hidden gap-3 px-2 py-2">
                     <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
                       <img
                         src={item.imageURL}
@@ -492,14 +476,14 @@ export default function CartPage() {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start">
-                        <h3 className="font-medium text-sm truncate pr-2">
+                        <h3 className="font-medium text-md truncate pr-2">
                           {item.name}
                         </h3>
                         <button
                           onClick={() =>
                             removeItem(item.menuItemId, item.options)
                           }
-                          className="text-error p-1 -mr-1 rounded-full hover:bg-error/10 transition-colors"
+                          className="btn btn-circle btn-sm btn-soft btn-error"
                           aria-label="Remove item"
                         >
                           <Trash2Icon size={16} />
@@ -525,17 +509,21 @@ export default function CartPage() {
                       )}
 
                       <div className="flex justify-between items-center mt-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 bg-base-100 rounded-full px-1 py-0.5">
+                          {/* Decrease Button */}
                           <button
-                            onClick={() =>
+                            className="p-0.5 rounded-full transition-colors"
+                            style={{ color: cart.restaurantAccentColor }}
+                            onClick={(e) => {
+                              e.currentTarget.style.backgroundColor =
+                                cart.restaurantAccentColor;
+                              e.currentTarget.style.color = "#fff";
                               updateQuantity(
                                 item.menuItemId,
                                 item.quantity - 1,
                                 item.options
-                              )
-                            }
-                            className="p-1 rounded-full transition-colors"
-                            style={{ color: cart.restaurantAccentColor }}
+                              );
+                            }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.backgroundColor =
                                 cart.restaurantAccentColor;
@@ -547,22 +535,30 @@ export default function CartPage() {
                               e.currentTarget.style.color =
                                 cart.restaurantAccentColor;
                             }}
+                            aria-label="Decrease quantity"
                           >
-                            <MinusIcon size={16} />
+                            <Minus size={14} />
                           </button>
-                          <span className="font-medium w-6 sm:w-8 text-center">
+
+                          {/* Quantity Display */}
+                          <span className="font-medium text-sm min-w-[1.5rem] text-center">
                             {item.quantity}
                           </span>
+
+                          {/* Increase Button */}
                           <button
-                            onClick={() =>
+                            className="p-0.5 rounded-full transition-colors"
+                            style={{ color: cart.restaurantAccentColor }}
+                            onClick={(e) => {
+                              e.currentTarget.style.backgroundColor =
+                                cart.restaurantAccentColor;
+                              e.currentTarget.style.color = "#fff";
                               updateQuantity(
                                 item.menuItemId,
                                 item.quantity + 1,
                                 item.options
-                              )
-                            }
-                            className="p-1 rounded-full transition-colors"
-                            style={{ color: cart.restaurantAccentColor }}
+                              );
+                            }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.backgroundColor =
                                 cart.restaurantAccentColor;
@@ -574,8 +570,9 @@ export default function CartPage() {
                               e.currentTarget.style.color =
                                 cart.restaurantAccentColor;
                             }}
+                            aria-label="Increase quantity"
                           >
-                            <PlusIcon size={16} />
+                            <Plus size={14} />
                           </button>
                         </div>
 
@@ -587,7 +584,7 @@ export default function CartPage() {
                   </div>
 
                   {/* Desktop layout */}
-                  <div className="hidden sm:flex items-center gap-4">
+                  <div className="hidden bg-base-300/50 rounded-xl sm:flex items-center gap-4 px-2">
                     <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0">
                       <img
                         src={item.imageURL}
@@ -624,17 +621,21 @@ export default function CartPage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 bg-base-100 rounded-full px-1 py-0.5">
+                        {/* Decrease Button */}
                         <button
-                          onClick={() =>
+                          className="p-0.5 rounded-full transition-colors"
+                          style={{ color: cart.restaurantAccentColor }}
+                          onClick={(e) => {
+                            e.currentTarget.style.backgroundColor =
+                              cart.restaurantAccentColor;
+                            e.currentTarget.style.color = "#fff";
                             updateQuantity(
                               item.menuItemId,
                               item.quantity - 1,
                               item.options
-                            )
-                          }
-                          className="p-1 rounded-full transition-colors"
-                          style={{ color: cart.restaurantAccentColor }}
+                            );
+                          }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.backgroundColor =
                               cart.restaurantAccentColor;
@@ -646,22 +647,30 @@ export default function CartPage() {
                             e.currentTarget.style.color =
                               cart.restaurantAccentColor;
                           }}
+                          aria-label="Decrease quantity"
                         >
-                          <MinusIcon size={16} />
+                          <Minus size={14} />
                         </button>
-                        <span className="font-medium w-6 sm:w-8 text-center">
+
+                        {/* Quantity Display */}
+                        <span className="font-medium text-sm min-w-[1.5rem] text-center">
                           {item.quantity}
                         </span>
+
+                        {/* Increase Button */}
                         <button
-                          onClick={() =>
+                          className="p-0.5 rounded-full transition-colors"
+                          style={{ color: cart.restaurantAccentColor }}
+                          onClick={(e) => {
+                            e.currentTarget.style.backgroundColor =
+                              cart.restaurantAccentColor;
+                            e.currentTarget.style.color = "#fff";
                             updateQuantity(
                               item.menuItemId,
                               item.quantity + 1,
                               item.options
-                            )
-                          }
-                          className="p-1 rounded-full transition-colors"
-                          style={{ color: cart.restaurantAccentColor }}
+                            );
+                          }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.backgroundColor =
                               cart.restaurantAccentColor;
@@ -673,8 +682,9 @@ export default function CartPage() {
                             e.currentTarget.style.color =
                               cart.restaurantAccentColor;
                           }}
+                          aria-label="Increase quantity"
                         >
-                          <PlusIcon size={16} />
+                          <Plus size={14} />
                         </button>
                       </div>
 
@@ -686,7 +696,7 @@ export default function CartPage() {
                         onClick={() =>
                           removeItem(item.menuItemId, item.options)
                         }
-                        className="p-2 text-error hover:bg-error/10 rounded-full transition-colors"
+                        className="btn btn-circle btn-sm btn-soft btn-error"
                         aria-label="Remove item"
                       >
                         <Trash2Icon size={18} />
@@ -706,7 +716,7 @@ export default function CartPage() {
             <DeliveryLocationSection />
 
             {/* Order Summary Section */}
-            <div className="bg-base-300/50 rounded-2xl shadow-sm p-5 md:p-6">
+            <div className="bg-base-300/50 rounded-2xl shadow-sm p-4 md:p-6 mb-6">
               <h2 className="text-lg font-semibold mb-5">Order Summary</h2>
 
               <div className="space-y-4 py-2">
@@ -729,9 +739,13 @@ export default function CartPage() {
 
               {/* Special Instructions Section */}
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">
+                <div className="flex items-center gap-1 text-sm text-base-content/70">
+                  <MessageSquare size={16} />
                   Special Instructions (Optional)
-                </label>
+                </div>
+
+                <label className="block text-sm font-medium mb-2 gap-2"></label>
+
                 <textarea
                   className="textarea textarea-bordered w-full h-24 resize-none rounded-lg"
                   placeholder="Add any special instructions for your order..."
@@ -746,15 +760,13 @@ export default function CartPage() {
 
               <div className="flex justify-between font-bold text-lg my-4">
                 <span>Total</span>
-                <span style={{ color: cart.restaurantAccentColor }}>
-                  Rs.{(totalPrice + (deliveryFee || 0)).toFixed(2)}
-                </span>
+                <span>Rs.{(totalPrice + (deliveryFee || 0)).toFixed(2)}</span>
               </div>
 
               <button
                 onClick={handleCheckout}
                 disabled={!isCheckoutValid || isProcessing}
-                className={`btn btn-md w-full mb-3 shadow-sm ${
+                className={`btn btn-md w-full gap-2 mb-3 shadow-sm ${
                   !isCheckoutValid ? "btn-disabled" : ""
                 }`}
                 style={{
@@ -767,12 +779,22 @@ export default function CartPage() {
                     : "",
                 }}
               >
-                <ScanBarcode size={20} />
-                {!isCheckoutValid
-                  ? "Enter Delivery Address"
-                  : isProcessing
-                    ? "Processing..."
-                    : "Proceed to Checkout"}
+                {!isCheckoutValid ? (
+                  <>
+                    <SquarePen size={20} />
+                    Enter Delivery Address
+                  </>
+                ) : isProcessing ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm"></span>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <ScanBarcode size={20} />
+                    Proceed to Checkout
+                  </>
+                )}
               </button>
 
               <Link
@@ -795,17 +817,14 @@ export default function CartPage() {
         <div className="flex items-center justify-between mb-3">
           <div>
             <span className="text-base-content/70 text-sm">Total</span>
-            <div
-              className="font-bold"
-              style={{ color: cart.restaurantAccentColor }}
-            >
+            <div className="font-bold">
               Rs.{(totalPrice + (deliveryFee || 0)).toFixed(2)}
             </div>
           </div>
           <button
             onClick={handleCheckout}
             disabled={!isCheckoutValid || isProcessing}
-            className={`btn px-8 ${!isCheckoutValid ? "btn-disabled" : ""}`}
+            className={`btn px-8 gap-2 ${!isCheckoutValid ? "btn-disabled" : ""}`}
             style={{
               backgroundColor: isCheckoutValid
                 ? cart.restaurantAccentColor
@@ -814,12 +833,22 @@ export default function CartPage() {
               borderColor: isCheckoutValid ? cart.restaurantAccentColor : "",
             }}
           >
-            <ScanBarcode size={20} />
-            {!isCheckoutValid
-              ? "Enter Address"
-              : isProcessing
-                ? "Processing..."
-                : "Checkout"}
+            {!isCheckoutValid ? (
+              <>
+                <SquarePen size={20} />
+                Enter Address
+              </>
+            ) : isProcessing ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Processing...
+              </>
+            ) : (
+              <>
+                <ScanBarcode size={20} />
+                Checkout
+              </>
+            )}
           </button>
         </div>
       </div>
