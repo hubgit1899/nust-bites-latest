@@ -74,7 +74,7 @@ const SearchAndFilterBar: React.FC<SearchAndFilterBarProps> = ({
       <div className="flex items-center gap-2">
         {/* Search Button to toggle search bar */}
         <button
-          className={`btn btn-sm btn-circle ${isExpanded ? "btn-error" : ""}`}
+          className={`btn btn-sm btn-circle ${isExpanded ? "btn-error" : ""} z-50`}
           onClick={toggleSearchBar}
           aria-label={isExpanded ? "Close search" : "Open search"}
           style={
