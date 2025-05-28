@@ -1,6 +1,4 @@
-import { getCurrentMinutesInPakistan } from "@/helpers/localTime";
 import mongoose, { Schema, Document, Types } from "mongoose";
-import autopopulate from "mongoose-autopopulate";
 
 export interface MenuOption {
   optionHeader: string;
@@ -60,40 +58,6 @@ const MenuItemSchema: Schema<MenuItem> = new Schema(
     toObject: { virtuals: true },
   }
 );
-
-// Apply plugin
-MenuItemSchema.plugin(autopopulate);
-
-// Virtual field for online
-MenuItemSchema.virtual("online").get(function (this: any) {
-  if (!this.available) return false;
-
-  const restaurant = this.restaurant;
-  if (!restaurant || typeof restaurant !== "object" || !restaurant._id) {
-    return false;
-  }
-
-  if (!restaurant.online) return false;
-
-  if (!this.forceOnlineOverride) {
-    return true;
-  }
-
-  if (
-    !this.onlineTime ||
-    this.onlineTime.start === undefined ||
-    this.onlineTime.end === undefined
-  ) {
-    return true;
-  }
-
-  const minutesNow = getCurrentMinutesInPakistan();
-  const { start, end } = this.onlineTime;
-
-  return start > end
-    ? minutesNow >= start || minutesNow < end
-    : minutesNow >= start && minutesNow < end;
-});
 
 const MenuItemModel =
   (mongoose.models.MenuItem as mongoose.Model<MenuItem>) ||
